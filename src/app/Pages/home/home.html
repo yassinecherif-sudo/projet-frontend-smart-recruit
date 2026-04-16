@@ -1,0 +1,392 @@
+<!-- home/home.html -->
+
+<!-- ===== TOPBAR ===== -->
+<div class="topbar-strip">
+  <div class="strip-inner">
+    <span><mat-icon>mail_outline</mat-icon> smartrecruit&#64;exemple.com</span>
+    <span><mat-icon>location_on</mat-icon> Tunis, Tunisie</span>
+  </div>
+  <div class="strip-right">
+    <a (click)="goToAuth('login')" class="strip-link">Connexion</a>
+    <span class="strip-sep">/</span>
+    <a (click)="goToAuth('register')" class="strip-link">Inscription</a>
+  </div>
+</div>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" [class.scrolled]="true">
+  <div class="nav-inner">
+    <div class="nav-brand" (click)="scrollTo('hero')">
+      <mat-icon class="brand-icon">psychology</mat-icon>
+      <span>Smart<strong>Recruit</strong></span>
+    </div>
+
+    <div class="nav-links" [class.open]="mobileMenuOpen">
+      <a (click)="scrollTo('hero')">Accueil</a>
+      <a (click)="scrollTo('categories')">Catégories</a>
+      <a (click)="scrollTo('offres')">Offres</a>
+      <a (click)="scrollTo('how')">Comment ça marche</a>
+      <a (click)="scrollTo('testimonials')">Témoignages</a>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-outline" (click)="goToAuth('login')">Se connecter</button>
+      <button class="btn-primary" (click)="goToAuth('register')">
+        <mat-icon>rocket_launch</mat-icon> Commencer
+      </button>
+    </div>
+
+    <button class="burger" (click)="mobileMenuOpen = !mobileMenuOpen">
+      <mat-icon>{{ mobileMenuOpen ? 'close' : 'menu' }}</mat-icon>
+    </button>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+  <div class="hero-bg">
+    <div class="hero-blob blob1"></div>
+    <div class="hero-blob blob2"></div>
+    <div class="hero-blob blob3"></div>
+    <div class="hero-grid"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-badge">
+      <mat-icon>auto_awesome</mat-icon>
+      <span>IA Générative · Matching Intelligent</span>
+    </div>
+
+    <h1 class="hero-title">
+      Recrutez les <span class="gradient-text">meilleurs talents</span><br>
+      grâce à l'Intelligence Artificielle
+    </h1>
+
+    <p class="hero-sub">
+      SmartRecruit connecte candidats et recruteurs avec un moteur de matching basé sur l'IA.
+      Scores de compatibilité en temps réel, analyse de CV, et pipeline Kanban intégré.
+    </p>
+
+    <div class="hero-ctas">
+      <button class="cta-primary" (click)="goToAuth('register')">
+        <mat-icon>person_search</mat-icon>
+        Je cherche un emploi
+      </button>
+      <button class="cta-secondary" (click)="goToAuth('register')">
+        <mat-icon>business_center</mat-icon>
+        Je recrute
+      </button>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="stats-bar">
+      @for (s of stats; track s.label) {
+        <div class="stat-item">
+          <span class="stat-value">{{ s.value }}</span>
+          <span class="stat-label">{{ s.label }}</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Search bar -->
+  <div class="search-bar-wrapper">
+    <div class="search-bar">
+      <div class="search-field">
+        <mat-icon>search</mat-icon>
+        <input type="text" [(ngModel)]="searchQuery" placeholder="Titre du poste, compétence...">
+      </div>
+      <div class="search-divider"></div>
+      <div class="search-field">
+        <mat-icon>work_outline</mat-icon>
+        <select [(ngModel)]="selectedType">
+          <option value="">Type de contrat</option>
+          <option value="CDI">CDI</option>
+          <option value="CDD">CDD</option>
+          <option value="Stage">Stage</option>
+          <option value="Freelance">Freelance</option>
+        </select>
+      </div>
+      <div class="search-divider"></div>
+      <div class="search-field">
+        <mat-icon>location_on</mat-icon>
+        <select [(ngModel)]="selectedLocation">
+          <option value="">Localisation</option>
+          <option value="Tunis">Tunis</option>
+          <option value="Sfax">Sfax</option>
+          <option value="Ariana">Ariana</option>
+          <option value="Béja">Béja</option>
+          <option value="Ben Arous">Ben Arous</option>
+          <option value="Bizerte">Bizerte</option>
+          <option value="Gabès">Gabès</option>
+          <option value="Gafsa">Gafsa</option>
+          <option value="Jendouba">Jendouba</option>
+          <option value="Kairouan">Kairouan</option>
+          <option value="Kasserine">Kasserine</option>
+          <option value="Kébili">Kébili</option>
+          <option value="Le Kef">Le Kef</option>
+          <option value="Mahdia">Mahdia</option>
+          <option value="Manouba">Manouba</option>
+          <option value="Médenine">Médenine</option>
+          <option value="Monastir">Monastir</option>
+          <option value="Nabeul">Nabeul</option>
+          <option value="Sidi Bouzid">Sidi Bouzid</option>
+          <option value="Siliana">Siliana</option>
+          <option value="Sousse">Sousse</option>
+          <option value="Tataouine">Tataouine</option>
+          <option value="Tozeur">Tozeur</option>
+          <option value="Zaghouan">Zaghouan</option>
+        </select>
+      </div>
+      <button class="search-btn" (click)="search()">
+        <mat-icon>search</mat-icon> Rechercher
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CATEGORIES ===== -->
+<section class="section categories-section" id="categories">
+  <div class="section-label">
+    <mat-icon>grid_view</mat-icon> DOMAINES
+  </div>
+  <h2 class="section-title">Explorez par domaine</h2>
+  <p class="section-sub">Des milliers d'opportunités dans tous les secteurs tech</p>
+
+  <div class="categories-grid">
+    @for (cat of categories; track cat.label) {
+      <div class="cat-card" (click)="search()">
+        <div class="cat-icon-wrap" [style.background]="cat.color + '18'">
+          <mat-icon [style.color]="cat.color">{{ cat.icon }}</mat-icon>
+        </div>
+        <span class="cat-label">{{ cat.label }}</span>
+        <span class="cat-count">{{ cat.count }} offres</span>
+        <mat-icon class="cat-arrow">arrow_forward</mat-icon>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- ===== FEATURED OFFRES ===== -->
+<section class="section offres-section" id="offres">
+  <div class="section-label">
+    <mat-icon>star</mat-icon> OFFRES EN VEDETTE
+  </div>
+  <h2 class="section-title">Offres d'emploi sélectionnées</h2>
+  <p class="section-sub">Matchées par notre IA selon votre profil</p>
+
+  @if (isLoadingOffres) {
+    <div class="offres-status">Chargement des offres...</div>
+  } @else if (offresError) {
+    <div class="offres-status error">{{ offresError }}</div>
+  } @else if (featuredOffres.length === 0) {
+    <div class="offres-status">Aucune offre publiée pour le moment.</div>
+  } @else {
+    <div class="offres-grid">
+      @for (offre of featuredOffres; track offre.id) {
+        <div class="offre-card">
+          @if (offre.urgent) {
+            <div class="offre-badge urgent">🔥 Urgent</div>
+          }
+
+          <div class="offre-header">
+            <div class="offre-logo" [style.background]="offre.logoColor + '20'" [style.color]="offre.logoColor">
+              {{ offre.logo }}
+            </div>
+            <div>
+              <h3 class="offre-titre">{{ offre.titre }}</h3>
+              <p class="offre-entreprise">{{ offre.entreprise }}</p>
+            </div>
+            <div class="offre-score" [style.border-color]="offre.logoColor" [style.color]="offre.logoColor">
+              {{ offre.score }}%
+            </div>
+          </div>
+
+          <div class="offre-meta">
+            <span><mat-icon>location_on</mat-icon>{{ offre.localisation }}</span>
+            <span><mat-icon>work_outline</mat-icon>{{ offre.typeContrat }}</span>
+            <span><mat-icon>payments</mat-icon>{{ offre.salaire }}</span>
+          </div>
+
+          @if (offre.tags.length > 0) {
+            <div class="offre-tags">
+              @for (tag of offre.tags; track tag) {
+                <span class="tag">{{ tag }}</span>
+              }
+            </div>
+          }
+
+          <div class="offre-footer">
+            <div class="score-bar-wrap">
+              <span class="score-bar-label">Compatibilité IA</span>
+              <div class="score-bar-track">
+                <div class="score-bar-fill" [style.width.%]="offre.score" [style.background]="offre.logoColor"></div>
+              </div>
+            </div>
+            <button class="btn-postuler" [style.background]="offre.logoColor" (click)="goToAuth('register')">
+              Postuler
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="see-all-wrap">
+    <button class="btn-see-all" (click)="goToAuth('register')">
+      Voir toutes les offres <mat-icon>arrow_forward</mat-icon>
+    </button>
+  </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="section how-section" id="how">
+  <div class="how-bg"></div>
+  <div class="section-label light">
+    <mat-icon>tips_and_updates</mat-icon> COMMENT ÇA MARCHE
+  </div>
+  <h2 class="section-title light">4 étapes pour décrocher votre prochain poste</h2>
+  <p class="section-sub light">Un processus simple, intelligent, et ultra-rapide.</p>
+
+  <div class="steps-grid">
+    @for (step of howItWorks; track step.step; let i = $index) {
+      <div class="step-card" [style.animation-delay]="(i * 0.1) + 's'">
+        <div class="step-number">{{ step.step }}</div>
+        <div class="step-icon-wrap">
+          <mat-icon>{{ step.icon }}</mat-icon>
+        </div>
+        <h3>{{ step.title }}</h3>
+        <p>{{ step.desc }}</p>
+        @if (i < howItWorks.length - 1) {
+          <div class="step-connector"><mat-icon>arrow_forward</mat-icon></div>
+        }
+      </div>
+    }
+  </div>
+</section>
+
+<!-- ===== AI FEATURE BANNER ===== -->
+<section class="ai-banner">
+  <div class="ai-banner-inner">
+    <div class="ai-text">
+      <div class="ai-chip"><mat-icon>psychology</mat-icon> Agent IA Intégré</div>
+      <h2>Votre assistant RH personnel,<br>disponible 24h/24</h2>
+      <p>Notre IA générative rédige vos offres, analyse les CV, suggère des questions d'entretien et calcule les scores de compatibilité automatiquement.</p>
+      <ul class="ai-features">
+        <li><mat-icon>check_circle</mat-icon> Rédaction automatique des offres d'emploi</li>
+        <li><mat-icon>check_circle</mat-icon> Parsing de CV et extraction des compétences</li>
+        <li><mat-icon>check_circle</mat-icon> Questions d'entretien personnalisées</li>
+        <li><mat-icon>check_circle</mat-icon> Score de matching en temps réel</li>
+      </ul>
+      <button class="cta-primary" (click)="goToAuth('register')">
+        <mat-icon>rocket_launch</mat-icon> Essayer gratuitement
+      </button>
+    </div>
+    <div class="ai-visual">
+      <div class="ai-card-mock">
+        <div class="mock-header">
+          <div class="mock-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="mock-title">Agent SmartRecruit IA</span>
+        </div>
+        <div class="mock-chat">
+          <div class="mock-msg bot">
+            <mat-icon>psychology</mat-icon>
+            <div class="msg-bubble">Analyse du profil en cours... Score calculé : <strong>94%</strong> de compatibilité avec l'offre Angular Senior 🎯</div>
+          </div>
+          <div class="mock-msg user">
+            <div class="msg-bubble user-bubble">Quelles questions d'entretien préparer ?</div>
+          </div>
+          <div class="mock-msg bot">
+            <mat-icon>psychology</mat-icon>
+            <div class="msg-bubble">Basé sur vos lacunes : <strong>RxJS avancé</strong> et <strong>testing Angular</strong>. Voici 5 questions techniques...</div>
+          </div>
+          <div class="mock-typing">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="section testimonials-section" id="testimonials">
+  <div class="section-label">
+    <mat-icon>format_quote</mat-icon> TÉMOIGNAGES
+  </div>
+  <h2 class="section-title">Ils ont trouvé grâce à SmartRecruit</h2>
+
+  <div class="testimonials-grid">
+    @for (t of testimonials; track t.name) {
+      <div class="testi-card">
+        <div class="testi-quote">"</div>
+        <p class="testi-text">{{ t.text }}</p>
+        <div class="testi-author">
+          <div class="testi-avatar" [style.background]="t.color">{{ t.initiales }}</div>
+          <div>
+            <strong>{{ t.name }}</strong>
+            <span>{{ t.role }}</span>
+          </div>
+          <div class="testi-stars">★★★★★</div>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- ===== CTA FINAL ===== -->
+<section class="cta-section">
+  <div class="cta-blob1"></div>
+  <div class="cta-blob2"></div>
+  <div class="cta-inner">
+    <mat-icon class="cta-icon">rocket_launch</mat-icon>
+    <h2>Prêt à transformer votre recrutement ?</h2>
+    <p>Rejoignez 8 000+ candidats et 300+ entreprises qui font confiance à SmartRecruit.</p>
+    <div class="cta-btns">
+      <button class="cta-primary" (click)="goToAuth('register')">
+        <mat-icon>person_add</mat-icon> Créer un compte gratuit
+      </button>
+      <button class="cta-ghost" (click)="goToAuth('login')">
+        Se connecter <mat-icon>arrow_forward</mat-icon>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <mat-icon>psychology</mat-icon>
+        <span>Smart<strong>Recruit</strong></span>
+      </div>
+      <p>La plateforme de recrutement intelligente propulsée par l'IA générative.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Produit</h4>
+      <a>Offres d'emploi</a>
+      <a>Matching IA</a>
+      <a>Agent IA</a>
+      <a>Dashboard</a>
+    </div>
+    <div class="footer-links">
+      <h4>Pour les recruteurs</h4>
+      <a>Publier une offre</a>
+      <a>Pipeline Kanban</a>
+      <a>Statistiques</a>
+      <a>Abonnement</a>
+    </div>
+    <div class="footer-links">
+      <h4>Contact</h4>
+      <a><mat-icon>mail_outline</mat-icon> smartrecruit&#64;exemple.com</a>
+      <a><mat-icon>location_on</mat-icon> Tunis, Tunisie</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 SmartRecruit. Tous droits réservés.</span>
+  
+  </div>
+</footer>
