@@ -1,0 +1,252 @@
+<nav class="auth-nav">
+  <div class="nav-brand" (click)="goHome()">
+    <mat-icon>psychology</mat-icon>
+    <span>Smart<strong>Recruit</strong></span>
+  </div>
+  <a class="nav-back" (click)="goHome()">
+    <mat-icon>arrow_back</mat-icon> Retour à l'accueil
+  </a>
+</nav>
+
+<div class="auth-layout">
+
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <div class="left-bg">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+      <div class="grid-overlay"></div>
+    </div>
+    <div class="left-content">
+      <div class="left-badge">
+        <mat-icon>auto_awesome</mat-icon>
+        IA Générative · Matching Intelligent
+      </div>
+      <h1>Trouvez le poste<br>qui vous <span class="gradient-text">ressemble</span></h1>
+      <p>SmartRecruit connecte talents et recruteurs grâce à un moteur IA qui calcule votre score de compatibilité en temps réel.</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon"><mat-icon>psychology</mat-icon></div>
+          <div><strong>Matching IA</strong><span>Score de compatibilité instantané</span></div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><mat-icon>speed</mat-icon></div>
+          <div><strong>Recrutement rapide</strong><span>Décision en moins de 10 jours</span></div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><mat-icon>view_kanban</mat-icon></div>
+          <div><strong>Pipeline Kanban</strong><span>Suivez vos candidatures en direct</span></div>
+        </div>
+      </div>
+      <div class="left-stats">
+        <div class="left-stat">
+          <span class="lstat-val">12K+</span>
+          <span class="lstat-label">Offres actives</span>
+        </div>
+        <div class="left-stat">
+          <span class="lstat-val">95%</span>
+          <span class="lstat-label">Taux de matching</span>
+        </div>
+        <div class="left-stat">
+          <span class="lstat-val">300+</span>
+          <span class="lstat-label">Entreprises</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="auth-right">
+    <div class="auth-card">
+      <div class="form-section">
+        
+        <!-- ✅ TABS -->
+        <div class="form-tabs">
+          <button class="tab-btn" [class.active]="activeTab === 'login'" (click)="activeTab = 'login'">
+            <mat-icon>login</mat-icon>
+            Connexion
+          </button>
+          <button class="tab-btn" [class.active]="activeTab === 'register'" (click)="activeTab = 'register'">
+            <mat-icon>person_add</mat-icon>
+            Inscription
+          </button>
+        </div>
+
+        <!-- ===== LOGIN TAB ===== -->
+        @if (activeTab === 'login') {
+          <div class="form-header">
+            <h2>Bon retour 👋</h2>
+            <p>Connectez-vous à votre espace SmartRecruit</p>
+          </div>
+
+          <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
+            <div class="field-group">
+              <label>Adresse email</label>
+              <div class="input-wrap" [class.focused]="emailFocused"
+                   [class.has-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+                <mat-icon>mail_outline</mat-icon>
+                <input type="email" formControlName="email" placeholder="vous@exemple.com"
+                       (focus)="emailFocused=true" (blur)="emailFocused=false">
+              </div>
+              @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
+                <span class="field-error"><mat-icon>error</mat-icon> Email invalide</span>
+              }
+            </div>
+
+            <div class="field-group">
+              <div class="field-label-row">
+                <label>Mot de passe</label>
+                <a class="forgot-link" (click)="showForgot = true">Oublié ?</a>
+              </div>
+              <div class="input-wrap" [class.focused]="passFocused">
+                <mat-icon>lock_outline</mat-icon>
+                <input [type]="hidePass ? 'password' : 'text'" formControlName="password"
+                       placeholder="••••••••"
+                       (focus)="passFocused=true" (blur)="passFocused=false">
+                <button type="button" class="eye-btn" (click)="hidePass = !hidePass">
+                  <mat-icon>{{ hidePass ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            @if (errorMessage) {
+              <div class="alert error-alert">
+                <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+            </div>
+          }
+
+            <button type="submit" class="submit-btn">
+              @if (loading) {
+                <span class="spinner"></span> Connexion en cours...
+              } @else {
+                <mat-icon>login</mat-icon> Se connecter
+              }
+            </button>
+          </form>
+
+        }
+
+        <!-- ===== REGISTER TAB ===== -->
+        @if (activeTab === 'register') {
+          <div class="form-header">
+            <h2>Créer un compte 🎯</h2>
+            <p>Choisissez votre profil pour commencer</p>
+          </div>
+
+          <div class="role-cards-inline">
+
+            <!-- Candidat -->
+            <div class="role-card candidat" (click)="choisirRole('CANDIDAT')">
+              <div class="role-card-icon">
+                <mat-icon>person_search</mat-icon>
+              </div>
+              <div class="role-card-body">
+                <strong>Je suis Candidat</strong>
+                <span>Je cherche un emploi et veux valoriser mes compétences</span>
+                <div class="role-features">
+                  <div class="feat"><mat-icon>check_circle</mat-icon> Score de matching IA</div>
+                  <div class="feat"><mat-icon>check_circle</mat-icon> Accès à toutes les offres</div>
+                  <div class="feat"><mat-icon>check_circle</mat-icon> Suivi de candidatures</div>
+                </div>
+              </div>
+              <mat-icon class="arrow">arrow_forward</mat-icon>
+            </div>
+
+            <!-- Recruteur -->
+            <div class="role-card recruteur" (click)="choisirRole('RECRUTEUR')">
+              <div class="role-card-icon">
+                <mat-icon>business_center</mat-icon>
+              </div>
+              <div class="role-card-body">
+                <strong>Je suis Recruteur</strong>
+                <span>Je veux trouver les meilleurs talents pour mon équipe</span>
+                <div class="role-features">
+                  <div class="feat"><mat-icon>check_circle</mat-icon> Pipeline Kanban</div>
+                  <div class="feat"><mat-icon>check_circle</mat-icon> Matching automatique</div>
+                  <div class="feat"><mat-icon>check_circle</mat-icon> Statistiques avancées</div>
+                </div>
+              </div>
+              <mat-icon class="arrow">arrow_forward</mat-icon>
+            </div>
+
+          </div>
+        }
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FORGOT PASSWORD MODAL ===== -->
+@if (showForgot) {
+  <div class="modal-overlay" (click)="showForgot = false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <button class="modal-close" (click)="showForgot = false">
+        <mat-icon>close</mat-icon>
+      </button>
+
+      <div class="modal-icon"><mat-icon>lock_reset</mat-icon></div>
+      <h3>Réinitialiser le mot de passe</h3>
+
+      <div class="steps-indicator">
+        <div class="step-dot" [class.active]="resetStep >= 1" [class.done]="resetStep > 1">1</div>
+        <div class="step-line" [class.done]="resetStep > 1"></div>
+        <div class="step-dot" [class.active]="resetStep >= 2" [class.done]="resetStep > 2">2</div>
+        <div class="step-line" [class.done]="resetStep > 2"></div>
+        <div class="step-dot" [class.active]="resetStep >= 3">3</div>
+      </div>
+
+      @if (resetStep === 1) {
+        <p class="modal-hint">Entrez votre email pour recevoir un code OTP.</p>
+        <div class="input-wrap">
+          <mat-icon>mail_outline</mat-icon>
+          <input type="email" [(ngModel)]="resetEmail" placeholder="vous@exemple.com">
+        </div>
+        <button class="submit-btn mt16" (click)="sendResetCode()" [disabled]="!resetEmail.trim()">
+          <mat-icon>send</mat-icon> Envoyer le code
+        </button>
+      }
+
+      @if (resetStep === 2) {
+        <p class="modal-hint">Code à 6 chiffres envoyé à <strong>{{ resetEmail }}</strong></p>
+        <div class="otp-grid">
+          @for (i of [0,1,2,3,4,5]; track i) {
+            <input type="text" maxlength="1" class="otp-digit"
+                   [id]="'otp-' + i"
+                   inputmode="numeric"
+                   pattern="[0-9]*"
+                   autocomplete="one-time-code"
+                   (input)="onOtpInput($event, i)"
+                   (paste)="onOtpPaste($event)"
+                   (keydown)="onOtpKey($event, i)">
+          }
+        </div>
+        <button class="submit-btn mt16" (click)="validateOtp()" [disabled]="otpCode.length < 6">
+          <mat-icon>verified</mat-icon> Valider le code
+        </button>
+      }
+
+      @if (resetStep === 3) {
+        <p class="modal-hint">Choisissez un nouveau mot de passe sécurisé.</p>
+        <div class="input-wrap">
+          <mat-icon>lock_outline</mat-icon>
+          <input type="password" [(ngModel)]="newPassword" placeholder="Nouveau mot de passe">
+        </div>
+        <button class="submit-btn mt16" (click)="changePassword()"
+                [disabled]="!newPassword || newPassword.length < 6">
+          <mat-icon>check_circle</mat-icon> Confirmer
+        </button>
+      }
+
+      @if (resetMessage) {
+        <div class="alert mt16" [class.success-alert]="resetOk" [class.error-alert]="!resetOk">
+          <mat-icon>{{ resetOk ? 'check_circle_outline' : 'error_outline' }}</mat-icon>
+          {{ resetMessage }}
+        </div>
+      }
+
+    </div>
+  </div>
+}

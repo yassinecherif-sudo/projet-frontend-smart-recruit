@@ -1,0 +1,809 @@
+<div class="app-layout" [class.dark-mode]="darkMode">
+
+  @if (showUserMenu) {
+    <button class="menu-backdrop" type="button" (click)="closeUserMenu()" aria-label="Fermer le menu utilisateur"></button>
+  }
+
+  <!-- ===== HEADER ===== -->
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="brand-name">smart<strong>recruit</strong></span>
+    </div>
+    <nav class="header-nav">
+      <a (click)="activeSection='offres'">Offres d'emploi</a>
+      <a>Formations</a>
+      <a>Contact</a>
+    </nav>
+    <div class="header-actions">
+      <button class="dark-toggle" (click)="darkMode = !darkMode" title="Mode sombre">
+        <mat-icon>{{ darkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+      <div class="user-menu-wrapper">
+        <button class="user-chip" type="button" (click)="toggleUserMenu($event)">
+          <div class="user-avatar-sm">{{ getInitials() }}</div>
+          <span>{{ currentUser?.prenom }}</span>
+          <mat-icon [class.open]="showUserMenu">expand_more</mat-icon>
+        </button>
+        @if (showUserMenu) {
+          <div class="user-dropdown" role="menu" (click)="$event.stopPropagation()">
+            <button type="button" (click)="goToFromUserMenu('mon-espace')">
+              <mat-icon>person</mat-icon> Mon Espace
+            </button>
+            <button type="button" (click)="goToFromUserMenu('profil-cv')">
+              <mat-icon>assignment</mat-icon> Mon Profil CV
+            </button>
+            <button type="button" (click)="goToSettings()">
+              <mat-icon>settings</mat-icon> Paramètres
+            </button>
+            <button type="button" class="danger" (click)="logout()">
+              <mat-icon>logout</mat-icon> Déconnexion
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== PAGE BODY ===== -->
+  <div class="page-body">
+
+    <!-- ===== LEFT SIDEBAR ===== -->
+    <aside class="sidebar">
+      <div class="sidebar-block">
+        <div class="sidebar-block-title">Menu</div>
+        <nav class="sidebar-nav">
+          <a (click)="activeSection='mon-espace'" [class.active]="activeSection==='mon-espace'">
+            <mat-icon>person_outline</mat-icon> Mon Espace
+          </a>
+          <a (click)="activeSection='profil-cv'" [class.active]="activeSection==='profil-cv'">
+            <mat-icon>description</mat-icon> Mon Profil CV
+            @if (!hasPersonalInfo()) { <span class="nav-dot">!</span> }
+          </a>
+          <a (click)="activeSection='candidatures'" [class.active]="activeSection==='candidatures'">
+            <mat-icon>outlined_flag</mat-icon> Mes candidatures
+          </a>
+          <a (click)="activeSection='documents'" [class.active]="activeSection==='documents'">
+            <mat-icon>folder_open</mat-icon> Mes documents
+          </a>
+          <a (click)="goToSettings()" [class.active]="activeSection==='personal-info'">
+            <mat-icon>settings</mat-icon> Paramètres de compte
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-block">
+        <div class="sidebar-block-title">Recherche Rapide</div>
+        <div class="sidebar-search">
+          <input type="text" [(ngModel)]="searchQuery" (input)="filterOffres()"
+                 placeholder="Métier, mots-clé, entreprise">
+          <button class="btn-rechercher" (click)="activeSection='offres'">Rechercher</button>
+          <a class="link-avancee" (click)="activeSection='offres'">RECHERCHE AVANCÉE</a>
+        </div>
+      </div>
+
+      <div class="sidebar-block">
+        <div class="sidebar-block-title">Complétez votre profil</div>
+        <div class="completion-widget">
+          <div class="completion-top">
+            <span>Profil complété à</span>
+            <span class="completion-pct" [class.zero]="getProfileCompletion() === 0">
+              {{ getProfileCompletion() }}%
+            </span>
+          </div>
+          <div class="completion-bar-bg">
+            <div class="completion-bar-fill" [style.width.%]="getProfileCompletion()"></div>
+          </div>
+          <p class="completion-note">
+            <mat-icon>info_outline</mat-icon>
+            Veuillez compléter les étapes de remplissage de votre profil
+          </p>
+          <ul class="completion-steps">
+            <li (click)="activeSection='personal-info'">Informations personnelles <span class="step-pct">+15%</span></li>
+            <li (click)="activeSection='professional-info'">Informations professionnelles <span class="step-pct">+15%</span></li>
+            <li (click)="activeSection='add-experience'">Expériences professionnelles <span class="step-pct">+25%</span></li>
+            <li (click)="activeSection='add-formation'">Diplômes et formations <span class="step-pct">+15%</span></li>
+            <li (click)="activeSection='competences'">Compétences <span class="step-pct">+10%</span></li>
+            <li (click)="activeSection='add-langue'">Langues <span class="step-pct">+10%</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sidebar-logout" (click)="logout()">
+        <mat-icon>logout</mat-icon> Déconnexion
+      </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content">
+
+      <!-- ========== MON PROFIL CV ========== -->
+      @if (activeSection === 'profil-cv') {
+        <div class="content-panel">
+          <div class="panel-header">MON PROFIL CV</div>
+          <div class="panel-body">
+
+            <div class="cv-section">
+              <div class="cv-section-row">
+                <h3>Informations personnelles</h3>
+                <a class="cv-add-link" (click)="activeSection='personal-info'">+ Ajouter mes informations personnelles</a>
+              </div>
+              @if (!hasPersonalInfo()) {
+                <div class="cv-warning"><mat-icon>warning_amber</mat-icon> Vous n'avez pas encore saisi toutes vos informations personnelles.</div>
+              } @else {
+                <div class="cv-info-row">
+                  <span>{{ currentUser?.prenom }} {{ currentUser?.nom }}</span>
+                  @if (currentUser?.ville) { <span>{{ currentUser?.ville }}, {{ currentUser?.pays }}</span> }
+                  @if (currentUser?.telephone) { <span>{{ currentUser?.telephone }}</span> }
+                </div>
+              }
+            </div>
+
+            <div class="cv-section">
+              <div class="cv-section-row">
+                <h3>Informations professionnelles</h3>
+                <a class="cv-add-link" (click)="activeSection='professional-info'">+ Ajouter mes informations professionnelles</a>
+              </div>
+              @if (!hasProfessionalInfo()) {
+                <div class="cv-warning"><mat-icon>warning_amber</mat-icon> Vous n'avez pas encore saisi vos informations professionnelles.</div>
+              } @else {
+                <div class="cv-info-row">
+                  @if (currentUser?.titreProfessionnel) { <span>{{ currentUser?.titreProfessionnel }}</span> }
+                  @if (currentUser?.situationProfessionnelle) { <span>{{ currentUser?.situationProfessionnelle }}</span> }
+                  @if (currentUser?.niveauEtude) { <span>{{ currentUser?.niveauEtude }}</span> }
+                </div>
+              }
+            </div>
+
+            <div class="cv-section">
+              <div class="cv-section-row">
+                <h3>Formations et diplômes</h3>
+                <a class="cv-add-link" (click)="activeSection='add-formation'; initFormationForm()">+ Ajouter une formation ou diplôme</a>
+              </div>
+              @if (formations.length === 0) {
+                <div class="cv-warning"><mat-icon>warning_amber</mat-icon> Vous n'avez pas encore saisi vos diplômes et formations.</div>
+              } @else {
+                @for (f of formations; track f.id) {
+                  <div class="cv-item">
+                    <div class="cv-item-main">
+                      <strong>{{ f.diplomeObtenu }}</strong>
+                      <span class="cv-item-sub">{{ f.etablissement }}{{ f.pays ? ' — ' + f.pays : '' }}</span>
+                    </div>
+                    <div class="cv-item-side">
+                      @if (f.statut) { <span class="cv-badge">{{ f.statut }}</span> }
+                      <button class="icon-btn-del" (click)="deleteFormation(f.id)"><mat-icon>delete_outline</mat-icon></button>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+
+            <div class="cv-section">
+              <div class="cv-section-row">
+                <h3>Expériences professionnelles</h3>
+                <a class="cv-add-link" (click)="activeSection='add-experience'; initExperienceForm()">+ Ajouter une expérience</a>
+              </div>
+              @if (experiences.length === 0) {
+                <div class="cv-warning"><mat-icon>warning_amber</mat-icon> Vous n'avez pas encore saisi vos expériences professionnelles.</div>
+              } @else {
+                @for (e of experiences; track e.id) {
+                  <div class="cv-item">
+                    <div class="cv-item-main">
+                      <strong>{{ e.titre }}</strong>
+                      <span class="cv-item-sub">{{ e.entreprise }}{{ e.lieu ? ' — ' + e.lieu : '' }}</span>
+                      <span class="cv-item-period">
+                        {{ e.debutMois }}/{{ e.debutAnnee }} → {{ e.enCours ? 'En cours' : e.finMois + '/' + e.finAnnee }}
+                      </span>
+                    </div>
+                    <div class="cv-item-side">
+                      <span class="cv-badge">{{ e.typeContrat }}</span>
+                      <button class="icon-btn-del" (click)="deleteExperience(e.id)"><mat-icon>delete_outline</mat-icon></button>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+
+            <div class="cv-section">
+              <div class="cv-section-row">
+                <h3>Langues</h3>
+                <a class="cv-add-link" (click)="activeSection='add-langue'; initLangueForm()">+ Ajouter une langue</a>
+              </div>
+              @if (langues.length === 0) {
+                <div class="cv-warning"><mat-icon>warning_amber</mat-icon> Vous n'avez pas encore saisi vos langues.</div>
+              } @else {
+                <div class="cv-langues">
+                  @for (l of langues; track l.id) {
+                    <div class="cv-langue-chip">
+                      <strong>{{ l.langue }}</strong>
+                      <span class="langue-niveau-tag">{{ l.niveau }}</span>
+                      @if (l.certificat && l.certificat !== '---------') {
+                        <span class="cv-badge">{{ l.certificat }}</span>
+                      }
+                      <button class="icon-btn-del" (click)="deleteLangue(l.id)"><mat-icon>close</mat-icon></button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="cv-section last">
+              <div class="cv-section-row">
+                <h3>Compétences</h3>
+                <div class="cv-actions-group">
+                  <a class="cv-add-link" (click)="activeSection='competences'">+ Ajouter une compétence</a>
+                  <a class="cv-add-link secondary">Ajout rapide</a>
+                </div>
+              </div>
+              @if (profilTags.length === 0) {
+                <div class="cv-warning"><mat-icon>warning_amber</mat-icon> Vous n'avez pas encore saisi vos compétences techniques.</div>
+              } @else {
+                <div class="cv-tags-row">
+                  @for (pt of profilTags; track pt.id) {
+                    <span class="cv-skill-tag">{{ pt.tagLibelle }} <em>{{ pt.niveau }}</em></span>
+                  }
+                </div>
+              }
+            </div>
+
+          </div>
+        </div>
+      }
+
+      <!-- ========== INFORMATIONS PERSONNELLES ========== -->
+      @if (activeSection === 'personal-info') {
+        <div class="content-panel">
+          <div class="panel-header">Informations personnelles</div>
+          <div class="panel-body">
+            <form [formGroup]="profileForm" (ngSubmit)="savePersonalInfo()" class="profile-form">
+              <div class="form-row-2">
+                <div class="form-group"><label>Nom *</label><input formControlName="nom" type="text"></div>
+                <div class="form-group"><label>Prénom *</label><input formControlName="prenom" type="text"></div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label>Genre</label>
+                  <div class="radio-row">
+                    <label><input type="radio" formControlName="genre" value="Masculin"> Masculin</label>
+                    <label><input type="radio" formControlName="genre" value="Féminin"> Féminin</label>
+                  </div>
+                </div>
+                <div class="form-group"><label>Date de naissance *</label><input formControlName="dateNaissance" type="date"></div>
+              </div>
+              <div class="form-group">
+                <label>Etat civil *</label>
+                <div class="radio-row">
+                  <label><input type="radio" formControlName="etatCivil" value="Célibataire"> Célibataire</label>
+                  <label><input type="radio" formControlName="etatCivil" value="Marié(e)"> Marié(e)</label>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group"><label>Adresse</label><input formControlName="adresse" type="text"></div>
+                <div class="form-group"><label>Code postal</label><input formControlName="codePostal" type="text"></div>
+              </div>
+              <div class="form-group">
+                <label>Pays *</label>
+                <select formControlName="pays">
+                  @for (p of paysListe; track p) { <option [value]="p">{{ p }}</option> }
+                </select>
+              </div>
+              <div class="form-group"><label>Téléphone *</label><input formControlName="telephone" type="tel" placeholder="+216..."></div>
+              <div class="form-actions">
+                <a class="btn-annuler-txt" (click)="activeSection='profil-cv'">Annuler</a>
+                <button type="submit" class="btn-enregistrer">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- ========== INFORMATIONS PROFESSIONNELLES ========== -->
+      @if (activeSection === 'professional-info') {
+        <div class="content-panel">
+          <div class="panel-header">Informations professionnelles</div>
+          <div class="panel-body">
+            <form [formGroup]="proInfoForm" (ngSubmit)="saveProfessionalInfo()" class="profile-form">
+              <h4 class="form-section-title">Informations professionnelles</h4>
+              <div class="form-group"><label>Votre titre professionnel</label><input formControlName="titreProfessionnel" type="text"></div>
+              <div class="form-group">
+                <label>Niveau d'étude</label>
+                <select formControlName="niveauEtude">
+                  @for (n of niveauxEtude; track n) { <option [value]="n">{{ n }}</option> }
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Situation professionnelle</label>
+                <select formControlName="situationProfessionnelle">
+                  @for (s of situationsPro; track s) { <option [value]="s">{{ s }}</option> }
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Disponibilité</label>
+                <div class="radio-row">
+                  <label><input type="radio" formControlName="disponibilite" value="Immédiate"> Immédiate</label>
+                  <label><input type="radio" formControlName="disponibilite" value="Avec préavis"> Avec préavis</label>
+                </div>
+              </div>
+              <div class="form-actions">
+                <a class="btn-annuler-txt" (click)="activeSection='profil-cv'">Annuler</a>
+                <button type="submit" class="btn-enregistrer">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- ========== AJOUTER FORMATION ========== -->
+      @if (activeSection === 'add-formation') {
+        <div class="content-panel">
+          <div class="panel-header">Ajouter une formation ou diplôme</div>
+          <div class="panel-body">
+            <form [formGroup]="formationForm" class="profile-form">
+              <div class="form-group">
+                <label>Type du diplôme/formation *</label>
+                <select formControlName="typeDiplome">
+                  <option value="---------">---------</option>
+                  @for (t of typesDiplome; track t) { <option [value]="t">{{ t }}</option> }
+                </select>
+              </div>
+              <div class="form-group"><label>Diplôme obtenu *</label><input formControlName="diplomeObtenu" type="text"></div>
+              <div class="form-group"><label>Établissement *</label><input formControlName="etablissement" type="text"></div>
+              <div class="form-group">
+                <label>Pays *</label>
+                <select formControlName="pays">
+                  @for (p of paysListe; track p) { <option [value]="p">{{ p }}</option> }
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Statut *</label>
+                <div class="radio-row">
+                  <label><input type="radio" formControlName="statut" value="Obtenu"> Obtenu</label>
+                  <label><input type="radio" formControlName="statut" value="Non validé"> Non validé</label>
+                  <label><input type="radio" formControlName="statut" value="En cours"> En cours</label>
+                </div>
+              </div>
+              <div class="form-actions">
+                <a class="btn-annuler-txt" (click)="activeSection='profil-cv'">Annuler</a>
+                <button type="button" class="btn-enregistrer" (click)="saveFormation(false)">Enregistrer</button>
+                <button type="button" class="btn-save-add" (click)="saveFormation(true)">Sauvegarder et ajouter un autre</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- ========== AJOUTER EXPÉRIENCE ========== -->
+      @if (activeSection === 'add-experience') {
+        <div class="content-panel">
+          <div class="panel-header">Ajouter une expérience professionnelle</div>
+          <div class="panel-body">
+            <form [formGroup]="experienceForm" class="profile-form">
+              <div class="form-group"><label>Titre du poste *</label><input formControlName="titre" type="text" placeholder="Ex: Développeur Full Stack"></div>
+              <div class="form-group"><label>Entreprise *</label><input formControlName="entreprise" type="text"></div>
+              <div class="form-group">
+                <label>Type de contrat</label>
+                <select formControlName="typeContrat">
+                  @for (t of typesContrat; track t) { <option [value]="t">{{ t }}</option> }
+                </select>
+              </div>
+              <div class="form-group"><label>Lieu</label><input formControlName="lieu" type="text" placeholder="Ville, Pays"></div>
+              <div class="form-group">
+                <label>Période</label>
+                <div class="periode-row">
+                  <select formControlName="debutMois">
+                    <option value="---">---</option>
+                    @for (m of mois; track m.val) { <option [value]="m.val">{{ m.label }}</option> }
+                  </select>
+                  <select formControlName="debutAnnee">
+                    <option value="---">---</option>
+                    @for (a of annees; track a) { <option [value]="a">{{ a }}</option> }
+                  </select>
+                  <span class="periode-sep">jusqu'à</span>
+                  <select formControlName="finMois">
+                    <option value="---">---</option>
+                    @for (m of mois; track m.val) { <option [value]="m.val">{{ m.label }}</option> }
+                  </select>
+                  <select formControlName="finAnnee">
+                    <option value="---">---</option>
+                    @for (a of annees; track a) { <option [value]="a">{{ a }}</option> }
+                  </select>
+                </div>
+                <label class="checkbox-line"><input type="checkbox" formControlName="enCours"> Poste actuel (en cours)</label>
+              </div>
+              <div class="form-group">
+                <label>Description</label>
+                <textarea formControlName="description" rows="5" placeholder="Décrivez vos responsabilités et réalisations..."></textarea>
+              </div>
+              <div class="form-actions">
+                <a class="btn-annuler-txt" (click)="activeSection='profil-cv'">Annuler</a>
+                <button type="button" class="btn-enregistrer" (click)="saveExperience(false)">Enregistrer</button>
+                <button type="button" class="btn-save-add" (click)="saveExperience(true)">Sauvegarder et ajouter une autre</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- ========== AJOUTER LANGUE ========== -->
+      @if (activeSection === 'add-langue') {
+        <div class="content-panel">
+          <div class="panel-header">Ajouter une langue</div>
+          <div class="panel-body">
+            <form [formGroup]="langueForm" class="profile-form">
+              <div class="form-group">
+                <label>Langue *</label>
+                <select formControlName="langue">
+                  <option value="---------">---------</option>
+                  @for (l of languesListe; track l) { <option [value]="l">{{ l }}</option> }
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Niveau *</label>
+                <div class="radio-col">
+                  @for (n of niveauxLangue; track n) {
+                    <label><input type="radio" formControlName="niveau" [value]="n"> {{ n }}</label>
+                  }
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Certificat</label>
+                <select formControlName="certificat">
+                  @for (c of certificatsLangue; track c) { <option [value]="c">{{ c }}</option> }
+                </select>
+              </div>
+              <div class="form-actions">
+                <a class="btn-annuler-txt" (click)="activeSection='profil-cv'">Annuler</a>
+                <button type="button" class="btn-enregistrer" (click)="saveLangue(false)">Enregistrer</button>
+                <button type="button" class="btn-save-add" (click)="saveLangue(true)">Sauvegarder et ajouter une autre langue</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- ========== COMPÉTENCES ========== -->
+      @if (activeSection === 'competences') {
+        <div class="content-panel">
+          <div class="panel-header">Mes Compétences</div>
+          <div class="panel-body">
+            <div class="add-skill-box">
+              <h4>Ajouter une compétence</h4>
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label>Compétence</label>
+                  <select [(ngModel)]="selectedTagId">
+                    <option [value]="null">Sélectionner un tag</option>
+                    @for (tag of allTags; track tag.id) {
+                      <option [value]="tag.id">{{ tag.libelle }} ({{ tag.categorie }})</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Niveau</label>
+                  <select [(ngModel)]="selectedNiveau">
+                    @for (n of niveaux; track n) { <option [value]="n">{{ n }}</option> }
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Années de pratique</label>
+                  <input type="number" [(ngModel)]="anneesPratique" min="0">
+                </div>
+              </div>
+              <button class="btn-enregistrer" (click)="ajouterTag()" [disabled]="!selectedTagId">+ Ajouter</button>
+            </div>
+            <div class="skills-grid">
+              @for (pt of profilTags; track pt.id) {
+                <div class="skill-card">
+                  <div class="skill-card-top">
+                    <span class="skill-name">{{ pt.tagLibelle }}</span>
+                    <button class="icon-btn-del" (click)="supprimerTag(pt.id)"><mat-icon>close</mat-icon></button>
+                  </div>
+                  <span class="skill-cat">{{ pt.tagCategorie }}</span>
+                  <div class="skill-niveau"
+                       [style.background]="getNiveauColor(pt.niveau) + '22'"
+                       [style.color]="getNiveauColor(pt.niveau)">{{ pt.niveau }}</div>
+                  <span class="skill-years">{{ pt.anneesPratique }} an(s) de pratique</span>
+                </div>
+              }
+              @if (profilTags.length === 0) {
+                <p class="empty-msg">Aucune compétence ajoutée</p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ========== MES CANDIDATURES ========== -->
+      @if (activeSection === 'candidatures') {
+        <div class="content-panel">
+          <div class="panel-header">Mes Candidatures</div>
+          <div class="panel-body">
+            <p class="panel-subtitle">{{ candidatures.length }} candidature(s) envoyée(s)</p>
+            @if (candidatures.length === 0) {
+              <div class="empty-state">
+                <mat-icon>assignment_late</mat-icon>
+                <p>Aucune candidature pour l'instant</p>
+                <button class="btn-enregistrer" (click)="activeSection='offres'">Voir les offres</button>
+              </div>
+            }
+            @for (c of candidatures; track c.id) {
+              <div class="candidature-card">
+                <div class="cand-main">
+                  <h3>{{ c.offreTitre }}</h3>
+                  <span class="cand-date">Postulé le {{ c.datePostulation | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="score-ring" [style.border-color]="getScoreColor(c.scoreTotal)">
+                  <span [style.color]="getScoreColor(c.scoreTotal)">{{ c.scoreTotal | number:'1.0-1' }}%</span>
+                  <small>Score</small>
+                </div>
+                @if (c.scoreMatching) {
+                  <div class="score-detail">
+                    <div class="score-bar-row">
+                      <span>Obligatoires</span>
+                      <div class="score-bar"><div [style.width.%]="c.scoreMatching.scoreObligatoires" [style.background]="getScoreColor(c.scoreMatching.scoreObligatoires)"></div></div>
+                      <span>{{ c.scoreMatching.scoreObligatoires | number:'1.0-1' }}%</span>
+                    </div>
+                    <div class="score-bar-row">
+                      <span>Bonus</span>
+                      <div class="score-bar"><div [style.width.%]="c.scoreMatching.scoreBonus" [style.background]="getScoreColor(c.scoreMatching.scoreBonus)"></div></div>
+                      <span>{{ c.scoreMatching.scoreBonus | number:'1.0-1' }}%</span>
+                    </div>
+                  </div>
+                }
+                <span class="statut-badge" [class]="getStatutClass(c.statut)">{{ c.statut }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ========== MES DOCUMENTS ========== -->
+      @if (activeSection === 'documents') {
+        <div class="content-panel">
+          <div class="panel-header">Mes documents</div>
+          <div class="panel-body">
+
+            @if (uploadInProgress) {
+              <div class="upload-progress">
+                <mat-icon>upload</mat-icon> Upload en cours...
+              </div>
+            }
+
+            <div class="documents-grid">
+
+              <!-- CV -->
+              <div class="document-card">
+                <div class="document-card-title">CV</div>
+                <label class="btn-upload">
+                  <input type="file" accept=".pdf,.doc,.docx"
+                         (change)="onDocumentSelected($event, 'cv')"
+                         style="display:none">
+                  Ajouter un CV
+                </label>
+                <div class="document-list">
+                  @if (cvDocuments.length === 0) {
+                    <p class="document-empty">Aucun CV ajouté</p>
+                  }
+                  @for (doc of cvDocuments; track doc.id; let i = $index) {
+                    <div class="document-item">
+                      <mat-icon>picture_as_pdf</mat-icon>
+                      <div class="doc-info">
+                        <span class="doc-name">{{ getDocumentName(doc) }}</span>
+                        <small class="doc-size">{{ getDocumentSize(doc) }}</small>
+                      </div>
+                      @if (doc.downloadUrl) {
+                        <a [href]="doc.downloadUrl" target="_blank" class="doc-download">
+                          <mat-icon>download</mat-icon>
+                        </a>
+                      }
+                      <button type="button" class="icon-btn-del" (click)="removeDocument('cv', i)">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Certifications -->
+              <div class="document-card">
+                <div class="document-card-title">Certifications</div>
+                <label class="btn-upload">
+                  <input type="file" accept=".pdf,.png,.jpg,.jpeg"
+                         (change)="onDocumentSelected($event, 'certification')"
+                         style="display:none">
+                  Ajouter des certifications
+                </label>
+                <div class="document-list">
+                  @if (certificationDocuments.length === 0) {
+                    <p class="document-empty">Aucune certification ajoutée</p>
+                  }
+                  @for (doc of certificationDocuments; track doc.id; let i = $index) {
+                    <div class="document-item">
+                      <mat-icon>workspace_premium</mat-icon>
+                      <div class="doc-info">
+                        <span class="doc-name">{{ getDocumentName(doc) }}</span>
+                        <small class="doc-size">{{ getDocumentSize(doc) }}</small>
+                      </div>
+                      @if (doc.downloadUrl) {
+                        <a [href]="doc.downloadUrl" target="_blank" class="doc-download">
+                          <mat-icon>download</mat-icon>
+                        </a>
+                      }
+                      <button type="button" class="icon-btn-del" (click)="removeDocument('certification', i)">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ========== OFFRES ========== -->
+      @if (activeSection === 'offres') {
+        <div class="content-panel">
+          <div class="panel-header">Offres disponibles</div>
+          <div class="panel-body">
+            <p class="panel-subtitle">{{ filteredOffres.length }} offre(s) trouvée(s)</p>
+            <div class="search-bar">
+              <mat-icon>search</mat-icon>
+              <input type="text" [(ngModel)]="searchQuery" (input)="filterOffres()" placeholder="Rechercher par titre ou localisation...">
+            </div>
+            <div class="offres-grid">
+              @for (offre of filteredOffres; track offre.id) {
+                <div class="offre-card">
+                  <div class="offre-top">
+                    <h3>{{ offre.titre }}</h3>
+                    <span class="contrat-badge">{{ offre.typeContrat }}</span>
+                  </div>
+                  <div class="offre-meta">
+                    <span><mat-icon>location_on</mat-icon>{{ offre.localisation }}</span>
+                    <span><mat-icon>payments</mat-icon>{{ offre.salaire }} TND</span>
+                    <span><mat-icon>trending_up</mat-icon>{{ offre.niveauExperienceRequis }}</span>
+                  </div>
+                  <p class="offre-desc">{{ offre.description | slice:0:120 }}...</p>
+                  @if (offre.tags && offre.tags.length > 0) {
+                    <div class="offre-tags">
+                      @for (tag of offre.tags | slice:0:4; track tag.id) {
+                        <span class="offre-tag" [class.obligatoire]="tag.obligatoire">{{ tag.tagLibelle }}</span>
+                      }
+                    </div>
+                  }
+                  <div class="offre-actions-row">
+                    <button class="btn-details" (click)="ouvrirDetailsOffre(offre)"><mat-icon>visibility</mat-icon> Voir l'offre</button>
+                    <button class="btn-postuler" (click)="ouvrirPostuler(offre)"><mat-icon>send</mat-icon> Postuler</button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ========== MON ESPACE ========== -->
+      @if (activeSection === 'mon-espace') {
+        <div class="dashboard-wrapper">
+          <div class="dashboard-grid">
+            <aside class="profile-side-card">
+              <div class="profile-main-info">
+                <div class="profile-avatar-wrapper">
+                  <div class="avatar-circle">{{ getInitials() }}</div>
+                </div>
+                <h2 class="user-full-name">{{ currentUser?.prenom }} {{ currentUser?.nom }}</h2>
+                <p class="user-job-title">{{ currentUser?.titreProfessionnel || 'Candidat SmartRecruit' }}</p>
+              </div>
+              <div class="profile-contact-info">
+                <div class="contact-row"><mat-icon>email</mat-icon><span>{{ currentUser?.email }}</span></div>
+                <div class="contact-row"><mat-icon>phone</mat-icon><span>{{ currentUser?.telephone || 'Non renseigné' }}</span></div>
+                <div class="contact-row"><mat-icon>location_on</mat-icon><span>{{ currentUser?.ville }}, {{ currentUser?.pays }}</span></div>
+              </div>
+              <button class="btn-full-edit" (click)="activeSection='personal-info'">Modifier le profil</button>
+            </aside>
+            <main class="dashboard-content-area">
+              <div class="stats-grid">
+                <div class="stat-item blue"><span class="stat-count">{{ offres.length }}</span><span class="stat-label">Offres disponibles</span></div>
+                <div class="stat-item purple"><span class="stat-count">{{ experiences.length }}</span><span class="stat-label">Expériences</span></div>
+                <div class="stat-item green"><span class="stat-count">{{ formations.length }}</span><span class="stat-label">Diplômes</span></div>
+                <div class="stat-item orange"><span class="stat-count">{{ profilTags.length }}</span><span class="stat-label">Compétences</span></div>
+              </div>
+              <div class="dashboard-card-white">
+                <div class="card-header-flex">
+                  <h3>Expériences professionnelles</h3>
+                  <a class="view-all-link" (click)="activeSection='profil-cv'">Voir tout</a>
+                </div>
+                <div class="timeline-container">
+                  @for (e of experiences.slice(0, 3); track e.id) {
+                    <div class="timeline-step">
+                      <div class="step-dot"></div>
+                      <div class="step-info">
+                        <h4>{{ e.titre }}</h4>
+                        <p class="company-name">{{ e.entreprise }} • {{ e.lieu }}</p>
+                        <p class="step-date">{{ e.debutAnnee }} - {{ e.enCours ? 'Aujourd\'hui' : e.finAnnee }}</p>
+                      </div>
+                    </div>
+                  } @empty {
+                    <p class="empty-msg">Aucune expérience ajoutée.</p>
+                  }
+                </div>
+              </div>
+              <div class="dashboard-card-white">
+                <div class="card-header-flex">
+                  <h3>Compétences clés</h3>
+                  <a class="view-all-link" (click)="activeSection='competences'">Gérer</a>
+                </div>
+                <div class="skills-progress-list">
+                  @for (pt of profilTags.slice(0, 4); track pt.id) {
+                    <div class="skill-entry">
+                      <div class="skill-text">
+                        <span class="skill-name">{{ pt.tagLibelle }}</span>
+                        <span class="skill-pct">{{ pt.niveau }}</span>
+                      </div>
+                      <div class="progress-container">
+                        <div class="progress-bar"
+                             [style.width.%]="getNiveauProgress(pt.niveau)"
+                             [style.background]="getNiveauColor(pt.niveau)"></div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      }
+
+      <!-- ===== MODAL DÉTAILS OFFRE ===== -->
+      @if (showOffreDetailsModal && selectedOffre) {
+        <div class="modal-overlay" (click)="fermerDetailsOffre()">
+          <div class="modal-card offre-detail-modal" (click)="$event.stopPropagation()">
+            <button class="modal-close-btn" (click)="fermerDetailsOffre()"><mat-icon>close</mat-icon></button>
+            <h3>{{ selectedOffre.titre }}</h3>
+            <p class="modal-sub">{{ selectedOffre.localisation }} · {{ selectedOffre.typeContrat }}</p>
+            <div class="offre-detail-meta">
+              <span><mat-icon>payments</mat-icon>{{ selectedOffre.salaire }} TND</span>
+              <span><mat-icon>trending_up</mat-icon>{{ selectedOffre.niveauExperienceRequis }}</span>
+            </div>
+            <div class="offre-detail-content">
+              <h4>Description du poste</h4>
+              <p>{{ selectedOffre.description }}</p>
+            </div>
+            @if (selectedOffre.tags && selectedOffre.tags.length > 0) {
+              <div class="offre-detail-content">
+                <h4>Compétences demandées</h4>
+                <div class="offre-tags">
+                  @for (tag of selectedOffre.tags; track tag.id) {
+                    <span class="offre-tag" [class.obligatoire]="tag.obligatoire">{{ tag.tagLibelle }}</span>
+                  }
+                </div>
+              </div>
+            }
+            <div class="modal-actions">
+              <button class="btn-annuler-txt" (click)="fermerDetailsOffre()">Fermer</button>
+              <button class="btn-enregistrer" (click)="postulerDepuisDetails()"><mat-icon>send</mat-icon> Postuler à cette offre</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ===== MODAL POSTULER ===== -->
+      @if (showPostulerModal) {
+        <div class="modal-overlay" (click)="showPostulerModal = false">
+          <div class="modal-card" (click)="$event.stopPropagation()">
+            <button class="modal-close-btn" (click)="showPostulerModal = false"><mat-icon>close</mat-icon></button>
+            <h3>Postuler — {{ selectedOffre?.titre }}</h3>
+            <p class="modal-sub">{{ selectedOffre?.localisation }} · {{ selectedOffre?.typeContrat }}</p>
+            <label>Lettre de motivation</label>
+            <textarea [(ngModel)]="lettreMotivation" placeholder="Expliquez pourquoi vous êtes le candidat idéal..." rows="6"></textarea>
+            <div class="modal-actions">
+              <button class="btn-annuler-txt" (click)="showPostulerModal = false">Annuler</button>
+              <button class="btn-enregistrer" (click)="postuler()"><mat-icon>send</mat-icon> Envoyer</button>
+            </div>
+          </div>
+        </div>
+      }
+
+    </main>
+  </div>
+</div>

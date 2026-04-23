@@ -1,0 +1,380 @@
+<div class="dashboard-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <mat-icon>psychology</mat-icon>
+      <span>Smart<strong>Recruit</strong></span>
+    </div>
+
+    <div class="sidebar-avatar">
+      <div class="avatar">{{ getInitials() }}</div>
+      <div class="avatar-info">
+        <strong>{{ currentUser?.prenom }} {{ currentUser?.nom }}</strong>
+        <span class="role-admin-badge">Administrateur</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a (click)="activeSection='dashboard'" [class.active]="activeSection==='dashboard'">
+        <mat-icon>dashboard</mat-icon> Dashboard
+      </a>
+      <a (click)="activeSection='utilisateurs'" [class.active]="activeSection==='utilisateurs'">
+        <mat-icon>people_outline</mat-icon> Utilisateurs
+      </a>
+      <a (click)="activeSection='tags'" [class.active]="activeSection==='tags'">
+        <mat-icon>local_offer</mat-icon> Bibliothèque Tags
+      </a>
+      <a (click)="activeSection='statistiques'" [class.active]="activeSection==='statistiques'">
+        <mat-icon>bar_chart</mat-icon> Statistiques
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a (click)="logout()">
+        <mat-icon>logout</mat-icon> Déconnexion
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    @if (activeSection === 'dashboard') {
+      <div class="page-header">
+        <h1>Administration 🛡️</h1>
+        <p>Vue d'ensemble de la plateforme Smart-Recruit</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card purple">
+          <div class="stat-icon"><mat-icon>people_outline</mat-icon></div>
+          <div>
+            <span class="stat-val">{{ stats.totalUtilisateurs }}</span>
+            <span class="stat-label">Utilisateurs total</span>
+          </div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon"><mat-icon>person_search</mat-icon></div>
+          <div>
+            <span class="stat-val">{{ stats.totalCandidats }}</span>
+            <span class="stat-label">Candidats</span>
+          </div>
+        </div>
+        <div class="stat-card teal">
+          <div class="stat-icon"><mat-icon>business_center</mat-icon></div>
+          <div>
+            <span class="stat-val">{{ stats.totalRecruteurs }}</span>
+            <span class="stat-label">Recruteurs</span>
+          </div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-icon"><mat-icon>local_offer</mat-icon></div>
+          <div>
+            <span class="stat-val">{{ stats.totalTags }}</span>
+            <span class="stat-label">Tags disponibles</span>
+          </div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon"><mat-icon>work_outline</mat-icon></div>
+          <div>
+            <span class="stat-val">{{ stats.totalOffres }}</span>
+            <span class="stat-label">Offres publiées</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions rapides -->
+      <div class="section-title">Actions rapides</div>
+      <div class="quick-actions">
+        <div class="quick-card" (click)="activeSection='utilisateurs'">
+          <mat-icon>manage_accounts</mat-icon>
+          <strong>Gérer les utilisateurs</strong>
+          <span>Activer, désactiver ou supprimer des comptes</span>
+        </div>
+        <div class="quick-card" (click)="activeSection='tags'">
+          <mat-icon>add_circle_outline</mat-icon>
+          <strong>Gérer les Tags</strong>
+          <span>Ajouter ou modifier la bibliothèque de compétences</span>
+        </div>
+        <div class="quick-card" (click)="activeSection='statistiques'">
+          <mat-icon>analytics</mat-icon>
+          <strong>Voir les statistiques</strong>
+          <span>Analyser l'activité de la plateforme</span>
+        </div>
+      </div>
+    }
+
+    <!-- UTILISATEURS -->
+    @if (activeSection === 'utilisateurs') {
+      <div class="page-header">
+        <h1>Gestion des Utilisateurs</h1>
+        <p>{{ utilisateurs.length }} utilisateur(s) enregistré(s)</p>
+      </div>
+
+      <div class="search-bar">
+        <mat-icon>search</mat-icon>
+        <input type="text" [(ngModel)]="searchUser"
+               (input)="filterUtilisateurs()"
+               placeholder="Rechercher par nom, email, rôle...">
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of filteredUtilisateurs; track u.id) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="avatar small">
+                      {{ (u.prenom || '?')[0] }}{{ (u.nom || '?')[0] }}
+                    </div>
+                    <span>{{ u.prenom }} {{ u.nom }}</span>
+                  </div>
+                </td>
+                <td class="email-cell">{{ u.email }}</td>
+                <td>
+                  <span class="role-badge" [class]="getRoleClass(u.role)">
+                    {{ u.role }}
+                  </span>
+                </td>
+                <td>
+                  @if (u.actif) {
+                    <span class="statut-badge actif">Actif</span>
+                  } @else {
+                    <span class="statut-badge inactif">Inactif</span>
+                  }
+                </td>
+                <td>
+                  <div class="action-btns">
+                    @if (!u.actif) {
+                      <button class="icon-btn green"
+                              (click)="activerCompte(u.id)"
+                              title="Activer">
+                        <mat-icon>check_circle</mat-icon>
+                      </button>
+                    }
+                    <button class="icon-btn danger"
+                            (click)="supprimerUtilisateur(u.id)"
+                            title="Supprimer">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        @if (filteredUtilisateurs.length === 0) {
+          <div class="empty-state">
+            <mat-icon>people_outline</mat-icon>
+            <p>Aucun utilisateur trouvé</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAGS -->
+    @if (activeSection === 'tags') {
+      <div class="page-header">
+        <h1>Bibliothèque de Tags</h1>
+        <p>{{ tags.length }} tag(s) disponible(s)</p>
+        <button class="btn-create" (click)="ouvrirCreerTag()">
+          <mat-icon>add</mat-icon> Nouveau Tag
+        </button>
+      </div>
+
+      <div class="search-bar">
+        <mat-icon>search</mat-icon>
+        <input type="text" [(ngModel)]="searchTag"
+               (input)="filterTags()"
+               placeholder="Rechercher un tag...">
+      </div>
+
+      <!-- Tags par catégorie -->
+      @for (cat of categories; track cat) {
+        @if (getTagsByCategorie(cat).length > 0) {
+          <div class="categorie-section">
+            <div class="categorie-header">
+              <span class="categorie-dot"
+                    [style.background]="getCategorieColor(cat)"></span>
+              <strong>{{ cat }}</strong>
+              <span class="count">
+                {{ getTagsByCategorie(cat).length }}
+              </span>
+            </div>
+            <div class="tags-grid">
+              @for (tag of filteredTags; track tag.id) {
+                @if (tag.categorie === cat) {
+                  <div class="tag-card">
+                    <div class="tag-top">
+                      <span class="tag-libelle"
+                            [style.color]="getCategorieColor(tag.categorie)">
+                        {{ tag.libelle }}
+                      </span>
+                      <div class="tag-actions">
+                        <button class="icon-btn-sm"
+                                (click)="ouvrirModifierTag(tag)"
+                                title="Modifier">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button class="icon-btn-sm danger"
+                                (click)="supprimerTag(tag.id)"
+                                title="Supprimer">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                    <span class="tag-cat"
+                          [style.background]="getCategorieColor(tag.categorie) + '22'"
+                          [style.color]="getCategorieColor(tag.categorie)">
+                      {{ tag.categorie }}
+                    </span>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      }
+
+      @if (filteredTags.length === 0) {
+        <div class="empty-state">
+          <mat-icon>local_offer</mat-icon>
+          <p>Aucun tag trouvé</p>
+          <button (click)="ouvrirCreerTag()">Créer le premier tag</button>
+        </div>
+      }
+    }
+
+    <!-- STATISTIQUES -->
+    @if (activeSection === 'statistiques') {
+      <div class="page-header">
+        <h1>Statistiques Plateforme</h1>
+        <p>Vue d'ensemble de l'activité Smart-Recruit</p>
+      </div>
+
+      <div class="stats-big-grid">
+        <div class="stat-big-card purple">
+          <mat-icon>people_outline</mat-icon>
+          <span class="big-val">{{ stats.totalUtilisateurs }}</span>
+          <span class="big-label">Utilisateurs</span>
+        </div>
+        <div class="stat-big-card blue">
+          <mat-icon>person_search</mat-icon>
+          <span class="big-val">{{ stats.totalCandidats }}</span>
+          <span class="big-label">Candidats</span>
+        </div>
+        <div class="stat-big-card teal">
+          <mat-icon>business_center</mat-icon>
+          <span class="big-val">{{ stats.totalRecruteurs }}</span>
+          <span class="big-label">Recruteurs</span>
+        </div>
+        <div class="stat-big-card amber">
+          <mat-icon>local_offer</mat-icon>
+          <span class="big-val">{{ stats.totalTags }}</span>
+          <span class="big-label">Tags</span>
+        </div>
+        <div class="stat-big-card green">
+          <mat-icon>work_outline</mat-icon>
+          <span class="big-val">{{ stats.totalOffres }}</span>
+          <span class="big-label">Offres</span>
+        </div>
+      </div>
+
+      <!-- Répartition par rôle -->
+      <div class="section-title" style="margin-top: 32px;">Répartition des utilisateurs</div>
+      <div class="repartition-card">
+        @if (stats.totalUtilisateurs > 0) {
+          <div class="repartition-bar">
+            <div class="bar-segment candidat"
+                 [style.width.%]="(stats.totalCandidats / stats.totalUtilisateurs) * 100"
+                 title="Candidats">
+            </div>
+            <div class="bar-segment recruteur"
+                 [style.width.%]="(stats.totalRecruteurs / stats.totalUtilisateurs) * 100"
+                 title="Recruteurs">
+            </div>
+          </div>
+          <div class="repartition-legend">
+            <div class="legend-item">
+              <span class="dot candidat"></span>
+              <span>Candidats — {{ stats.totalCandidats }}</span>
+            </div>
+            <div class="legend-item">
+              <span class="dot recruteur"></span>
+              <span>Recruteurs — {{ stats.totalRecruteurs }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </main>
+</div>
+
+<!-- ===== MODAL TAG ===== -->
+@if (showTagModal) {
+  <div class="modal-overlay" (click)="showTagModal = false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="showTagModal = false">
+        <mat-icon>close</mat-icon>
+      </button>
+
+      <h3>{{ editTagMode ? 'Modifier le Tag' : 'Nouveau Tag' }}</h3>
+
+      <form [formGroup]="tagForm" (ngSubmit)="soumettreTag()">
+        <div class="form-group">
+          <label>Libellé *</label>
+          <input formControlName="libelle"
+                 placeholder="Ex: Angular, Python, Docker...">
+          @if (tagForm.get('libelle')?.invalid && tagForm.get('libelle')?.touched) {
+            <span class="field-error">
+              <mat-icon>error</mat-icon> Requis
+            </span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Catégorie *</label>
+          <select formControlName="categorie">
+            @for (cat of categories; track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Preview -->
+        <div class="tag-preview">
+          <span>Aperçu :</span>
+          <span class="tag-pill"
+                [style.background]="getCategorieColor(tagForm.get('categorie')?.value) + '22'"
+                [style.color]="getCategorieColor(tagForm.get('categorie')?.value)">
+            {{ tagForm.get('libelle')?.value || 'Mon Tag' }}
+          </span>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel"
+                  (click)="showTagModal = false">Annuler</button>
+          <button type="submit" class="btn-submit"
+                  [disabled]="tagForm.invalid">
+            <mat-icon>{{ editTagMode ? 'save' : 'add' }}</mat-icon>
+            {{ editTagMode ? 'Sauvegarder' : 'Créer le tag' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

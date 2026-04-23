@@ -1,0 +1,205 @@
+<!-- register-candidat/register-candidat.html -->
+
+<!-- Navbar minimal -->
+<nav class="auth-nav">
+  <div class="nav-brand" (click)="goHome()">
+    <mat-icon>psychology</mat-icon>
+    <span>Smart<strong>Recruit</strong></span>
+  </div>
+  <a class="nav-back" (click)="goHome()">
+    <mat-icon>arrow_back</mat-icon> Retour à l'accueil
+  </a>
+</nav>
+
+<div class="auth-layout">
+
+  <!-- ===== LEFT PANEL ===== -->
+  <div class="auth-left">
+    <div class="left-bg">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+      <div class="grid-overlay"></div>
+    </div>
+
+    <div class="left-content">
+      <div class="left-badge">
+        <mat-icon>auto_awesome</mat-icon>
+        IA Générative · Matching Intelligent
+      </div>
+
+      <h1>Trouvez le poste<br>qui vous <span class="gradient-text">ressemble</span></h1>
+      <p>SmartRecruit connecte talents et recruteurs grâce à un moteur IA qui calcule votre score de compatibilité en temps réel.</p>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon"><mat-icon>psychology</mat-icon></div>
+          <div>
+            <strong>Matching IA</strong>
+            <span>Score de compatibilité instantané</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><mat-icon>speed</mat-icon></div>
+          <div>
+            <strong>Recrutement rapide</strong>
+            <span>Décision en moins de 10 jours</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><mat-icon>view_kanban</mat-icon></div>
+          <div>
+            <strong>Pipeline Kanban</strong>
+            <span>Suivez vos candidatures en direct</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="left-stats">
+        <div class="left-stat">
+          <span class="lstat-val">12K+</span>
+          <span class="lstat-label">Offres actives</span>
+        </div>
+        <div class="left-stat">
+          <span class="lstat-val">95%</span>
+          <span class="lstat-label">Taux de matching</span>
+        </div>
+        <div class="left-stat">
+          <span class="lstat-val">300+</span>
+          <span class="lstat-label">Entreprises</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RIGHT PANEL ===== -->
+  <div class="auth-right">
+    <div class="auth-card">
+
+      <div class="form-section">
+        <div class="form-header">
+          <h2>Espace Candidat 🎯</h2>
+          <p>Créez votre profil et trouvez votre prochain emploi</p>
+        </div>
+
+        <!-- Candidat-only banner -->
+        <div class="candidat-banner">
+          <div class="banner-icon"><mat-icon>person_search</mat-icon></div>
+          <div>
+            <strong>Inscription Candidat</strong>
+            <span>Accédez à des milliers d'offres matchées par IA</span>
+          </div>
+          <div class="banner-check"><mat-icon>verified</mat-icon></div>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
+
+          <div class="field-row">
+            <div class="field-group">
+              <label>Prénom</label>
+              <div class="input-wrap">
+                <mat-icon>person_outline</mat-icon>
+                <input type="text" formControlName="prenom" placeholder="Yasmine">
+              </div>
+              @if (registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched) {
+                <span class="field-error"><mat-icon>error</mat-icon> Requis</span>
+              }
+            </div>
+            <div class="field-group">
+              <label>Nom</label>
+              <div class="input-wrap">
+                <mat-icon>badge</mat-icon>
+                <input type="text" formControlName="nom" placeholder="Ben Ali">
+              </div>
+              @if (registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched) {
+                <span class="field-error"><mat-icon>error</mat-icon> Requis</span>
+              }
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>Adresse email</label>
+            <div class="input-wrap">
+              <mat-icon>mail_outline</mat-icon>
+              <input type="email" formControlName="email" placeholder="vous@exemple.com">
+            </div>
+            @if (registerForm.get('email')?.hasError('email') && registerForm.get('email')?.touched) {
+              <span class="field-error"><mat-icon>error</mat-icon> Email invalide</span>
+            }
+          </div>
+
+          <div class="field-group">
+            <label>Mot de passe</label>
+            <div class="input-wrap">
+              <mat-icon>lock_outline</mat-icon>
+              <input [type]="hideRegPass ? 'password' : 'text'" formControlName="password" placeholder="Min. 8 caractères">
+              <button type="button" class="eye-btn" (click)="hideRegPass = !hideRegPass">
+                <mat-icon>{{ hideRegPass ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+            @if (showPasswordConditionError) {
+              <div class="password-feedback">
+                <mat-icon>error_outline</mat-icon>
+                <span>Conditions manquantes: {{ passwordMissingConditions.join(' • ') }}</span>
+              </div>
+            }
+          </div>
+
+          @if (registerForm.get('password')?.value?.length > 0) {
+  <div class="pass-strength">
+    <div class="strength-bars">
+      <div class="sbar"
+           [class.weak]="pwStrength === 1"
+           [class.medium]="pwStrength === 2"
+           [class.strong]="pwStrength === 3"
+           [class.excellent]="pwStrength === 4"
+           [class.active]="pwStrength >= 1"></div>
+      <div class="sbar"
+           [class.medium]="pwStrength === 2"
+           [class.strong]="pwStrength === 3"
+           [class.excellent]="pwStrength === 4"
+           [class.active]="pwStrength >= 2"></div>
+      <div class="sbar"
+           [class.strong]="pwStrength === 3"
+           [class.excellent]="pwStrength === 4"
+           [class.active]="pwStrength >= 3"></div>
+      <div class="sbar"
+           [class.excellent]="pwStrength === 4"
+           [class.active]="pwStrength >= 4"></div>
+    </div>
+    <span class="strength-label"
+          [class.weak]="pwStrength === 1"
+          [class.medium]="pwStrength === 2"
+          [class.strong]="pwStrength === 3"
+          [class.excellent]="pwStrength === 4">
+      {{ pwStrengthLabel }}
+    </span>
+  </div>
+} 
+
+          @if (errorMessage) {
+            <div class="alert error-alert"><mat-icon>error_outline</mat-icon> {{ errorMessage }}</div>
+          }
+          @if (successMessage) {
+            <div class="alert success-alert"><mat-icon>check_circle_outline</mat-icon> {{ successMessage }}</div>
+          }
+
+          <button type="submit" class="submit-btn">
+            @if (loading) {
+              <span class="spinner"></span> Création en cours...
+            } @else {
+              <mat-icon>rocket_launch</mat-icon> Créer mon compte candidat
+            }
+          </button>
+
+        </form>
+
+      <p class="switch-text">
+  Vous êtes recruteur ? 
+  <a (click)="goToRegisterRecruteur()">Créer un compte recruteur</a>
+</p>
+      </div>
+
+    </div>
+  </div>
+</div>

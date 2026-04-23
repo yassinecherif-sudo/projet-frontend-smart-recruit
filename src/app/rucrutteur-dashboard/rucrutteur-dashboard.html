@@ -1,0 +1,486 @@
+<div class="dashboard-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <mat-icon>psychology</mat-icon>
+      <span>Smart<strong>Recruit</strong></span>
+    </div>
+
+    <div class="sidebar-avatar">
+      <div class="avatar">{{ getInitials() }}</div>
+      <div class="avatar-info">
+        <strong>{{ currentUser?.prenom }} {{ currentUser?.nom }}</strong>
+        <span>Recruteur</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a (click)="activeSection='dashboard'" [class.active]="activeSection==='dashboard'">
+        <mat-icon>dashboard</mat-icon> Dashboard
+      </a>
+      <a (click)="activeSection='offres'" [class.active]="activeSection==='offres'">
+        <mat-icon>work_outline</mat-icon> Mes Offres
+      </a>
+      <a (click)="activeSection='candidatures'" [class.active]="activeSection==='candidatures'">
+        <mat-icon>people_outline</mat-icon> Candidatures
+      </a>
+      <a (click)="activeSection='statistiques'" [class.active]="activeSection==='statistiques'">
+        <mat-icon>bar_chart</mat-icon> Statistiques
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a (click)="logout()">
+        <mat-icon>logout</mat-icon> Déconnexion
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    @if (activeSection === 'dashboard') {
+      <div class="page-header">
+        <h1>Bonjour {{ currentUser?.prenom }} 👋</h1>
+        <p>Voici un résumé de votre activité de recrutement</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <mat-icon>work_outline</mat-icon>
+          <div>
+            <span class="stat-val">{{ offres.length }}</span>
+            <span class="stat-label">Offres publiées</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <mat-icon>people_outline</mat-icon>
+          <div>
+            <span class="stat-val">{{ stats?.totalCandidatures || 0 }}</span>
+            <span class="stat-label">Total candidatures</span>
+          </div>
+        </div>
+        <div class="stat-card yellow">
+          <mat-icon>hourglass_empty</mat-icon>
+          <div>
+            <span class="stat-val">{{ stats?.candidaturesATrier || 0 }}</span>
+            <span class="stat-label">À trier</span>
+          </div>
+        </div>
+        <div class="stat-card green">
+          <mat-icon>check_circle</mat-icon>
+          <div>
+            <span class="stat-val">{{ stats?.candidaturesRetenues || 0 }}</span>
+            <span class="stat-label">Retenus</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dernières offres -->
+      <div class="section-title">Mes dernières offres</div>
+      @if (offres.length === 0) {
+        <div class="empty-state">
+          <mat-icon>work_off</mat-icon>
+          <p>Aucune offre publiée</p>
+          <button (click)="activeSection='offres'">Créer une offre</button>
+        </div>
+      }
+      <div class="offres-mini">
+        @for (offre of offres | slice:0:4; track offre.id) {
+          <div class="offre-mini-card">
+            <div class="offre-mini-info">
+              <strong>{{ offre.titre }}</strong>
+              <span>{{ offre.localisation }} · {{ offre.typeContrat }}</span>
+            </div>
+            <span class="statut-offre" [class]="getStatutOffreClass(offre.statut)">
+              {{ offre.statut }}
+            </span>
+            <button class="btn-voir" (click)="voirCandidatures(offre.id)">
+              <mat-icon>people_outline</mat-icon> Candidats
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- OFFRES -->
+    @if (activeSection === 'offres') {
+      <div class="page-header">
+        <h1>Mes Offres</h1>
+        <p>{{ offres.length }} offre(s) publiée(s)</p>
+        <button class="btn-create" (click)="ouvrirCreerOffre()">
+          <mat-icon>add</mat-icon> Nouvelle offre
+        </button>
+      </div>
+
+      @if (offres.length === 0) {
+        <div class="empty-state">
+          <mat-icon>work_off</mat-icon>
+          <p>Aucune offre publiée pour l'instant</p>
+          <button (click)="ouvrirCreerOffre()">Créer ma première offre</button>
+        </div>
+      }
+
+      <div class="offres-list">
+        @for (offre of offres; track offre.id) {
+          <div class="offre-card">
+            <div class="offre-top">
+              <div class="offre-info">
+                <h3>{{ offre.titre }}</h3>
+                <div class="offre-meta">
+                  <span><mat-icon>location_on</mat-icon>{{ offre.localisation }}</span>
+                  <span><mat-icon>work_outline</mat-icon>{{ offre.typeContrat }}</span>
+                  <span><mat-icon>payments</mat-icon>{{ offre.salaire }} TND</span>
+                  <span><mat-icon>trending_up</mat-icon>{{ offre.niveauExperienceRequis }}</span>
+                </div>
+              </div>
+              <div class="offre-actions">
+                <span class="statut-offre" [class]="getStatutOffreClass(offre.statut)">
+                  {{ offre.statut }}
+                </span>
+                <button class="icon-btn" (click)="voirCandidatures(offre.id)" title="Voir candidatures">
+                  <mat-icon>people_outline</mat-icon>
+                </button>
+                <button class="icon-btn" (click)="ouvrirModifierOffre(offre)" title="Modifier">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button class="icon-btn warn" (click)="cloturerOffre(offre.id)" title="Clôturer">
+                  <mat-icon>lock</mat-icon>
+                </button>
+                <button class="icon-btn danger" (click)="supprimerOffre(offre.id)" title="Supprimer">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tags requis -->
+            @if (offre.tags && offre.tags.length > 0) {
+              <div class="offre-tags">
+                @for (tag of offre.tags; track tag.id) {
+                  <span class="tag" [class.obligatoire]="tag.obligatoire">
+                    {{ tag.tagLibelle }}
+                    @if (tag.obligatoire) { <span class="poids">{{ tag.poids }}pts</span> }
+                  </span>
+                }
+              </div>
+            }
+
+            <div class="offre-footer">
+              <span>Score minimum : <strong>{{ offre.scoreMinimum }}%</strong></span>
+              <span>Clôture : <strong>{{ offre.dateCloture | date:'dd/MM/yyyy' }}</strong></span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- CANDIDATURES / PIPELINE KANBAN -->
+    @if (activeSection === 'candidatures') {
+      <div class="page-header">
+        <h1>Pipeline Recrutement</h1>
+        <p>{{ getOffreTitle() }}</p>
+      </div>
+
+      <!-- Sélection offre -->
+      <div class="filtres-bar">
+        <select [(ngModel)]="selectedOffreId" (change)="loadCandidatures()">
+          <option [value]="null">Sélectionner une offre</option>
+          @for (offre of offres; track offre.id) {
+            <option [value]="offre.id">{{ offre.titre }}</option>
+          }
+        </select>
+
+        <select [(ngModel)]="filtreStatut" (change)="loadCandidatures()">
+          <option value="">Tous les statuts</option>
+          @for (s of statutsKanban; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+
+        <div class="score-filtre">
+          <label>Score min : {{ filtreScore }}%</label>
+          <input type="range" [(ngModel)]="filtreScore"
+                 min="0" max="100" step="10"
+                 (change)="loadCandidatures()">
+        </div>
+      </div>
+
+      <!-- KANBAN -->
+      @if (candidatures.length > 0) {
+        <div class="kanban-board">
+
+          @for (statut of statutsKanban; track statut) {
+            <div class="kanban-col">
+              <div class="kanban-header" [class]="getStatutClass(statut)">
+                <span>{{ statut.replace('_', ' ') }}</span>
+                <span class="count">
+                  {{ candidatures | json | slice:0:0 }}
+                  {{ (candidatures).length }}
+                </span>
+              </div>
+
+              <div class="kanban-cards">
+                @for (c of candidatures; track c.id) {
+                  @if (c.statut === statut) {
+                    <div class="kanban-card">
+                      <div class="kcard-header">
+                        <strong>{{ getCandidateName(c) }}</strong>
+                        <div class="score-badge"
+                             [style.background]="getScoreColor(c.scoreTotal) + '22'"
+                             [style.color]="getScoreColor(c.scoreTotal)">
+                          {{ c.scoreTotal | number:'1.0-1' }}%
+                        </div>
+                      </div>
+
+                      @if (hasCandidateContact(c)) {
+                        <div class="candidate-contact">
+                          @if (getCandidateEmail(c)) {
+                            <div class="contact-line">
+                              <mat-icon>email</mat-icon>
+                              <span>{{ getCandidateEmail(c) }}</span>
+                            </div>
+                          }
+                          @if (getCandidatePhone(c)) {
+                            <div class="contact-line">
+                              <mat-icon>phone</mat-icon>
+                              <span>{{ getCandidatePhone(c) }}</span>
+                            </div>
+                          }
+                          @if (getCandidateLocation(c)) {
+                            <div class="contact-line">
+                              <mat-icon>location_on</mat-icon>
+                              <span>{{ getCandidateLocation(c) }}</span>
+                            </div>
+                          }
+                        </div>
+                      }
+
+                      @if (c.scoreMatching) {
+                        <div class="kcard-scores">
+                          <div class="mini-bar">
+                            <span>Obligatoires</span>
+                            <div class="bar-track">
+                              <div [style.width.%]="c.scoreMatching.scoreObligatoires"
+                                   [style.background]="getScoreColor(c.scoreMatching.scoreObligatoires)">
+                              </div>
+                            </div>
+                          </div>
+                          <div class="mini-bar">
+                            <span>Bonus</span>
+                            <div class="bar-track">
+                              <div [style.width.%]="c.scoreMatching.scoreBonus"
+                                   [style.background]="getScoreColor(c.scoreMatching.scoreBonus)">
+                              </div>
+                            </div>
+                          </div>
+                          <div class="tags-count">
+                            <span class="green">✓ {{ c.scoreMatching.nbTagsCorrespondants }}</span>
+                            <span class="red">✗ {{ c.scoreMatching.nbTagsManquants }}</span>
+                          </div>
+                        </div>
+                      }
+
+                      <div class="kcard-actions">
+                        @for (s of statutsKanban; track s) {
+                          @if (s !== c.statut) {
+                            <button (click)="changerStatut(c.id, s)"
+                                    [class]="'btn-statut ' + getStatutClass(s)">
+                              {{ s.replace('_', ' ') }}
+                            </button>
+                          }
+                        }
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (!selectedOffreId) {
+        <div class="empty-state">
+          <mat-icon>people_outline</mat-icon>
+          <p>Sélectionnez une offre pour voir les candidatures</p>
+        </div>
+      }
+
+      @if (selectedOffreId && candidatures.length === 0) {
+        <div class="empty-state">
+          <mat-icon>inbox</mat-icon>
+          <p>Aucune candidature pour cette offre</p>
+        </div>
+      }
+    }
+
+    <!-- STATISTIQUES -->
+    @if (activeSection === 'statistiques') {
+      <div class="page-header">
+        <h1>Statistiques</h1>
+        <p>Vue d'ensemble de votre recrutement</p>
+      </div>
+
+      @if (stats) {
+        <div class="stats-big-grid">
+          <div class="stat-big-card">
+            <div class="stat-icon purple"><mat-icon>people_outline</mat-icon></div>
+            <span class="stat-big-val">{{ stats.totalCandidatures }}</span>
+            <span class="stat-big-label">Total candidatures</span>
+          </div>
+          <div class="stat-big-card">
+            <div class="stat-icon yellow"><mat-icon>hourglass_empty</mat-icon></div>
+            <span class="stat-big-val">{{ stats.candidaturesATrier }}</span>
+            <span class="stat-big-label">À trier</span>
+          </div>
+          <div class="stat-big-card">
+            <div class="stat-icon blue"><mat-icon>record_voice_over</mat-icon></div>
+            <span class="stat-big-val">{{ stats.candidaturesEntretien }}</span>
+            <span class="stat-big-label">En entretien</span>
+          </div>
+          <div class="stat-big-card">
+            <div class="stat-icon green"><mat-icon>check_circle</mat-icon></div>
+            <span class="stat-big-val">{{ stats.candidaturesRetenues }}</span>
+            <span class="stat-big-label">Retenus</span>
+          </div>
+          <div class="stat-big-card">
+            <div class="stat-icon red"><mat-icon>cancel</mat-icon></div>
+            <span class="stat-big-val">{{ stats.candidaturesRefusees }}</span>
+            <span class="stat-big-label">Refusés</span>
+          </div>
+          <div class="stat-big-card">
+            <div class="stat-icon purple"><mat-icon>psychology</mat-icon></div>
+            <span class="stat-big-val">{{ stats.scoreMoyen | number:'1.0-1' }}%</span>
+            <span class="stat-big-label">Score moyen</span>
+          </div>
+        </div>
+      }
+    }
+
+  </main>
+</div>
+
+<!-- ===== MODAL OFFRE ===== -->
+@if (showOffreModal) {
+  <div class="modal-overlay" (click)="showOffreModal = false">
+    <div class="modal-card large" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="showOffreModal = false">
+        <mat-icon>close</mat-icon>
+      </button>
+
+      <h3>{{ editMode ? 'Modifier l\'offre' : 'Créer une offre' }}</h3>
+
+      <form [formGroup]="offreForm" (ngSubmit)="soumettreOffre()" class="offre-form">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Titre du poste *</label>
+            <input formControlName="titre" placeholder="Ex: Développeur Angular Senior">
+          </div>
+          <div class="form-group">
+            <label>Localisation *</label>
+            <input formControlName="localisation" placeholder="Ex: Tunis">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea formControlName="description" rows="4"
+                    placeholder="Décrivez le poste..."></textarea>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Type de contrat</label>
+            <select formControlName="typeContrat">
+              @for (t of typeContrats; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Niveau expérience</label>
+            <select formControlName="niveauExperienceRequis">
+              @for (n of niveaux; track n) {
+                <option [value]="n">{{ n }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Salaire (TND)</label>
+            <input type="number" formControlName="salaire" placeholder="Ex: 3000">
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Score minimum (%)</label>
+            <input type="number" formControlName="scoreMinimum" min="0" max="100">
+          </div>
+          <div class="form-group">
+            <label>Date de clôture</label>
+            <input type="date" formControlName="dateCloture">
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="form-group">
+          <label>Tags requis</label>
+          <div class="tags-selector">
+            <div class="tags-available">
+              @for (tag of allTags; track tag.id) {
+                <span class="tag-option"
+                      [class.selected]="isTagSelected(tag.id)"
+                      (click)="ajouterTagOffre(tag)">
+                  {{ tag.libelle }}
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags sélectionnés -->
+        @if (selectedTags.length > 0) {
+          <div class="selected-tags-list">
+            @for (tag of selectedTags; track tag.tagId) {
+              <div class="selected-tag-row">
+                <span class="tag-name">{{ tag.tagLibelle }}</span>
+                <label>
+                  <input type="checkbox" [(ngModel)]="tag.obligatoire"
+                         [ngModelOptions]="{standalone: true}">
+                  Obligatoire
+                </label>
+                <input type="number" [(ngModel)]="tag.poids"
+                       [ngModelOptions]="{standalone: true}"
+                       placeholder="Poids" min="1" max="100">
+                <select [(ngModel)]="tag.niveauMinimum"
+                        [ngModelOptions]="{standalone: true}">
+                  @for (n of niveauxExpertise; track n) {
+                    <option [value]="n">{{ n }}</option>
+                  }
+                </select>
+                <button type="button" class="remove-tag"
+                        (click)="supprimerTagOffre(tag.tagId)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel"
+                  (click)="showOffreModal = false">Annuler</button>
+          <button type="submit" class="btn-submit"
+                  [disabled]="offreForm.invalid">
+            <mat-icon>{{ editMode ? 'save' : 'add' }}</mat-icon>
+            {{ editMode ? 'Sauvegarder' : 'Publier l\'offre' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+}
