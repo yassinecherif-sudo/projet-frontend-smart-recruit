@@ -1,6 +1,6 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, throwError } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { LoginRequest } from '../models/login-request';
 import { LoginResponse } from '../models/login-response';
@@ -21,6 +21,10 @@ export class Auth {
   }
 
   login(data: LoginRequest): Observable<LoginResponse> {
+    if (!data.email && !data.username) {
+      return throwError(() => new Error('Either email or username is required'));
+    }
+
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, data).pipe(
       tap((response) => {
         if (!this.isBrowser()) return;

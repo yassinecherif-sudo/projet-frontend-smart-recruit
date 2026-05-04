@@ -4,16 +4,15 @@ import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup } from '@angul
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectorRef } from '@angular/core';
 
 const API = 'http://localhost:8083';
 
 interface OffreTag { id: number; tagLibelle: string; obligatoire?: boolean; }
-
 interface Offre {
   id: number; titre: string; typeContrat: string; localisation: string;
   salaire: number; niveauExperienceRequis: string; description: string; tags?: OffreTag[];
 }
-
 interface Formation {
   id?: number; typeDiplome: string; diplomeObtenu: string;
   etablissement: string; statut: string;
@@ -21,28 +20,17 @@ interface Formation {
   periodeFinMois?: string; periodeFinAnnee?: string;
   pays?: string; mention?: string; description?: string;
 }
-
 interface Experience {
   id?: number; titre: string; entreprise: string; typeContrat: string; lieu: string;
   debutMois: string; debutAnnee: string; finMois: string; finAnnee: string;
   enCours: boolean; description: string;
 }
-
 interface Langue {
-  id?: number; langue: string; niveau: string; certificat: string;
-  score?: string;
+  id?: number; langue: string; niveau: string; certificat: string; score?: string;
 }
-
-// ✅ Interface Document
 interface CandidatDocument {
-  id?: number;
-  fileName: string;
-  nom?: string;
-  documentType: string;
-  type?: string;
-  sizeBytes?: number;
-  uploadedAt?: string;
-  downloadUrl?: string;
+  id?: number; fileName: string; nom?: string; documentType: string;
+  type?: string; sizeBytes?: number; uploadedAt?: string; downloadUrl?: string;
 }
 
 @Component({
@@ -55,7 +43,6 @@ interface CandidatDocument {
 export class CandidatDashboardComponent implements OnInit {
 
   activeSection = 'profil-cv';
-  darkMode = false;
   showUserMenu = false;
   searchQuery = '';
   showPostulerModal = false;
@@ -74,7 +61,6 @@ export class CandidatDashboardComponent implements OnInit {
   experiences: Experience[] = [];
   langues: Langue[] = [];
 
-  // ✅ Documents comme objets (plus comme strings)
   cvDocuments: CandidatDocument[] = [];
   certificationDocuments: CandidatDocument[] = [];
   uploadInProgress = false;
@@ -84,6 +70,13 @@ export class CandidatDashboardComponent implements OnInit {
   formationForm!: FormGroup;
   experienceForm!: FormGroup;
   langueForm!: FormGroup;
+
+  // ── Notifications ─────────────────────────────────────────
+  notifications: any[] = [];
+  showNotifPanel = false;
+  get nbNonLues(): number {
+    return this.notifications.filter(n => !n.lu).length;
+  }
 
   selectedTagId: number | null = null;
   selectedNiveau = 'DEBUTANT';
@@ -114,58 +107,41 @@ export class CandidatDashboardComponent implements OnInit {
     'Baccalauréat', 'Licence (Bac+3)', 'Master (Bac+5)', 'Doctorat (Bac+8)',
     'BTS / DUT', 'Certificat professionnel', 'Formation continue', 'Autre'
   ];
-
   typesContrat = ['CDI', 'CDD', 'Stage', 'Alternance', 'Freelance', 'Intérim'];
-
   paysListe = [
     'Tunisie', 'France', 'Algérie', 'Maroc', 'Allemagne', 'Belgique',
     'Canada', 'Espagne', 'Italie', 'Suisse', 'Royaume-Uni', 'Autre'
   ];
-
   languesListe = [
     'Arabe', 'Français', 'Anglais', 'Allemand', 'Espagnol',
     'Italien', 'Portugais', 'Turc', 'Chinois', 'Japonais', 'Autre'
   ];
-
   certificatsLangue = [
     '---------', 'TOEFL', 'TOEIC', 'IELTS', 'DELF', 'DALF', 'TCF', 'DELE', 'Goethe-Zertifikat', 'Autre'
   ];
-
   niveauxEtude = ['Bac', 'Bac + 1', 'Bac + 2', 'Bac + 3', 'Bac + 4', 'Bac + 5', 'Bac + 6', 'Bac + 7 et +'];
-
   situationsPro = [
     '---------', 'En poste', 'En recherche d\'emploi', 'En stage', 'Freelance', 'Sans emploi', 'Etudiant'
   ];
-
   secteurs = [
-    'aéronautique / aviation / voyagiste',
-    'agriculture / agro-alimentaire / environnement',
-    'architecture / immobilier / BTP',
-    'artisanat / textile / cuir',
-    'automobile / moteurs / engins mécaniques',
-    'banque / finance / assurances',
-    'commerce / vente / distribution',
-    'communication / médias / publicité',
-    'culture / sport / loisirs',
-    'droit / sciences politiques',
-    'éducation / formation',
-    'énergie / eau / électricité',
-    'hôtellerie / restauration / tourisme',
-    'industrie / production',
-    'informatique / télécommunications',
-    'logistique / transport',
-    'marketing / e-commerce',
-    'médecine / paramédical / santé',
-    'ressources humaines',
-    'sécurité / défense',
+    'aéronautique / aviation / voyagiste', 'agriculture / agro-alimentaire / environnement',
+    'architecture / immobilier / BTP', 'artisanat / textile / cuir',
+    'automobile / moteurs / engins mécaniques', 'banque / finance / assurances',
+    'commerce / vente / distribution', 'communication / médias / publicité',
+    'culture / sport / loisirs', 'droit / sciences politiques',
+    'éducation / formation', 'énergie / eau / électricité',
+    'hôtellerie / restauration / tourisme', 'industrie / production',
+    'informatique / télécommunications', 'logistique / transport',
+    'marketing / e-commerce', 'médecine / paramédical / santé',
+    'ressources humaines', 'sécurité / défense',
   ];
-
   selectedSecteurs: string[] = [];
 
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     const currentYear = new Date().getFullYear();
     for (let y = currentYear; y >= 1970; y--) {
@@ -184,7 +160,8 @@ export class CandidatDashboardComponent implements OnInit {
     this.loadFormations();
     this.loadExperiences();
     this.loadLangues();
-    this.loadDocuments(); // ✅ nouveau
+    this.loadDocuments();
+    this.loadNotifications();
     this.initForms();
   }
 
@@ -206,6 +183,7 @@ export class CandidatDashboardComponent implements OnInit {
         this.centresInteret = data.centresInteret || '';
         this.initProfileForm();
         this.initProInfoForm();
+        this.cdr.detectChanges();
       },
       error: () => this.initProfileForm()
     });
@@ -213,7 +191,7 @@ export class CandidatDashboardComponent implements OnInit {
 
   loadOffres(): void {
     this.http.get<Offre[]>(`${API}/offres`).subscribe({
-      next: (data) => { this.offres = data; this.filteredOffres = [...data]; }
+      next: (data) => { this.offres = data; this.filteredOffres = [...data]; this.cdr.detectChanges(); }
     });
   }
 
@@ -222,6 +200,7 @@ export class CandidatDashboardComponent implements OnInit {
       next: (data) => this.candidatures = data,
       error: () => this.candidatures = []
     });
+    this.cdr.detectChanges();
   }
 
   loadProfilTags(): void {
@@ -229,6 +208,7 @@ export class CandidatDashboardComponent implements OnInit {
       next: (data) => this.profilTags = data,
       error: () => this.profilTags = []
     });
+    this.cdr.detectChanges();
   }
 
   loadAllTags(): void {
@@ -236,6 +216,7 @@ export class CandidatDashboardComponent implements OnInit {
       next: (data) => this.allTags = data,
       error: () => this.allTags = []
     });
+    this.cdr.detectChanges();
   }
 
   loadFormations(): void {
@@ -243,6 +224,7 @@ export class CandidatDashboardComponent implements OnInit {
       next: (data) => this.formations = data,
       error: () => this.formations = []
     });
+    this.cdr.detectChanges();
   }
 
   loadExperiences(): void {
@@ -250,6 +232,7 @@ export class CandidatDashboardComponent implements OnInit {
       next: (data) => this.experiences = data,
       error: () => this.experiences = []
     });
+    this.cdr.detectChanges();
   }
 
   loadLangues(): void {
@@ -257,103 +240,132 @@ export class CandidatDashboardComponent implements OnInit {
       next: (data) => this.langues = data,
       error: () => this.langues = []
     });
+    this.cdr.detectChanges();
   }
 
-  // ✅ Charger les documents depuis le backend
   loadDocuments(): void {
-    this.http.get<CandidatDocument[]>(
-      `${API}/candidats/${this.currentUser.id}/documents`
-    ).subscribe({
+    this.http.get<CandidatDocument[]>(`${API}/candidats/${this.currentUser.id}/documents`).subscribe({
       next: (data) => {
         const all = data || [];
-        this.cvDocuments = all.filter(d =>
-          (d.documentType || d.type || '').toUpperCase() === 'CV'
-        );
-        this.certificationDocuments = all.filter(d =>
-          (d.documentType || d.type || '').toUpperCase() === 'CERTIFICATION'
-        );
+        this.cvDocuments = all.filter(d => (d.documentType || d.type || '').toUpperCase() === 'CV');
+        this.certificationDocuments = all.filter(d => (d.documentType || d.type || '').toUpperCase() === 'CERTIFICATION');
+        this.cdr.detectChanges();
       },
-      error: () => {
-        this.cvDocuments = [];
-        this.certificationDocuments = [];
+      error: () => { this.cvDocuments = []; this.certificationDocuments = []; }
+    });
+  }
+
+  // ===== NOTIFICATIONS =====
+  loadNotifications(): void {
+    if (!this.currentUser?.id) return;
+    this.http.get<any[]>(`${API}/notifications/utilisateur/${this.currentUser.id}`).subscribe({
+      next: (data) => this.notifications = data.sort((a, b) =>
+        new Date(b.dateEnvoi).getTime() - new Date(a.dateEnvoi).getTime()),
+      error: () => this.notifications = []
+    });
+  }
+
+  toggleNotifPanel(): void {
+    this.showNotifPanel = !this.showNotifPanel;
+  }
+
+  marquerLue(id: number): void {
+    this.http.patch(`${API}/notifications/${id}/lue`, {}).subscribe({
+      next: () => {
+        const n = this.notifications.find(n => n.id === id);
+        if (n) n.lu = true;
       }
     });
   }
 
-  // ===== FORM INITS =====
+  marquerToutesLues(): void {
+    this.http.patch(`${API}/notifications/utilisateur/${this.currentUser.id}/toutes-lues`, {}).subscribe({
+      next: () => this.notifications.forEach(n => n.lu = true)
+    });
+  }
 
+  getNotifIcon(type: string): string {
+    const map: any = {
+      'CANDIDATURE': 'assignment_turned_in', 'OFFRE': 'work_outline',
+      'STATUT': 'swap_horiz', 'EMAIL': 'email', 'SYSTEME': 'info',
+    };
+    return map[type] || 'notifications';
+  }
+
+  getNotifColor(type: string): string {
+    const map: any = {
+      'CANDIDATURE': '#6366f1', 'OFFRE': '#22c55e',
+      'STATUT': '#f59e0b', 'EMAIL': '#3b82f6', 'SYSTEME': '#94a3b8',
+    };
+    return map[type] || '#94a3b8';
+  }
+
+  formatNotifDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const diffMs = new Date().getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffH = Math.floor(diffMin / 60);
+    const diffD = Math.floor(diffH / 24);
+    if (diffMin < 1) return "À l'instant";
+    if (diffMin < 60) return `il y a ${diffMin}min`;
+    if (diffH < 24) return `il y a ${diffH}h`;
+    return `il y a ${diffD}j`;
+  }
+
+  // ===== FORM INITS =====
   initProfileForm(): void {
     this.profileForm = this.fb.group({
-      nom:           [this.currentUser?.nom || ''],
-      prenom:        [this.currentUser?.prenom || ''],
-      genre:         [this.currentUser?.genre || ''],
-      dateNaissance: [this.currentUser?.dateNaissance || ''],
-      etatCivil:     [this.currentUser?.etatCivil || ''],
-      adresse:       [this.currentUser?.adresse || ''],
-      codePostal:    [this.currentUser?.codePostal || ''],
-      pays:          [this.currentUser?.pays || 'Tunisie'],
-      telephone:     [this.currentUser?.telephone || ''],
+      nom: [this.currentUser?.nom || ''], prenom: [this.currentUser?.prenom || ''],
+      genre: [this.currentUser?.genre || ''], dateNaissance: [this.currentUser?.dateNaissance || ''],
+      etatCivil: [this.currentUser?.etatCivil || ''], adresse: [this.currentUser?.adresse || ''],
+      codePostal: [this.currentUser?.codePostal || ''], pays: [this.currentUser?.pays || 'Tunisie'],
+      telephone: [this.currentUser?.telephone || ''],
     });
   }
 
   initProInfoForm(): void {
     this.proInfoForm = this.fb.group({
-      titreProfessionnel:      [this.currentUser?.titreProfessionnel || ''],
-      niveauEtude:             [this.currentUser?.niveauEtude || 'Bac + 3'],
-      situationProfessionnelle:[this.currentUser?.situationProfessionnelle || ''],
-      disponibilite:           [this.currentUser?.disponibilite || ''],
+      titreProfessionnel: [this.currentUser?.titreProfessionnel || ''],
+      niveauEtude: [this.currentUser?.niveauEtude || 'Bac + 3'],
+      situationProfessionnelle: [this.currentUser?.situationProfessionnelle || ''],
+      disponibilite: [this.currentUser?.disponibilite || ''],
     });
   }
 
   initFormationForm(): void {
     this.formationForm = this.fb.group({
-      typeDiplome:   ['---------'],
-      diplomeObtenu: [''],
-      etablissement: [''],
-      pays:          ['Tunisie'],
-      statut:        [''],
+      typeDiplome: ['---------'], diplomeObtenu: [''],
+      etablissement: [''], pays: ['Tunisie'], statut: [''],
     });
   }
 
   initExperienceForm(): void {
     this.experienceForm = this.fb.group({
-      titre:      [''],
-      entreprise: [''],
-      typeContrat:['CDI'],
-      lieu:       [''],
-      debutMois:  ['---'],
-      debutAnnee: ['---'],
-      finMois:    ['---'],
-      finAnnee:   ['---'],
-      enCours:    [false],
-      description:[''],
+      titre: [''], entreprise: [''], typeContrat: ['CDI'], lieu: [''],
+      debutMois: ['---'], debutAnnee: ['---'], finMois: ['---'], finAnnee: ['---'],
+      enCours: [false], description: [''],
     });
   }
 
   initLangueForm(): void {
     this.langueForm = this.fb.group({
-      langue:     ['---------'],
-      niveau:     [''],
-      certificat: ['---------'],
+      langue: ['---------'], niveau: [''], certificat: ['---------'],
     });
     this.sejours = [{ pays: '', dureeJours: 0 }];
   }
 
   // ===== SAVE METHODS =====
-
   savePersonalInfo(): void {
     const v = this.profileForm.value;
     this.http.put(`${API}/candidats/${this.currentUser.id}`, v).subscribe({
-      next: () => this.applyAndReturn(v),
-      error: () => this.applyAndReturn(v)
+      next: () => this.applyAndReturn(v), error: () => this.applyAndReturn(v)
     });
   }
 
   saveProfessionalInfo(): void {
     const v = this.proInfoForm.value;
     this.http.put(`${API}/candidats/${this.currentUser.id}`, v).subscribe({
-      next: () => this.applyAndReturn(v),
-      error: () => this.applyAndReturn(v)
+      next: () => this.applyAndReturn(v), error: () => this.applyAndReturn(v)
     });
   }
 
@@ -366,106 +378,56 @@ export class CandidatDashboardComponent implements OnInit {
   saveFormation(addAnother = false): void {
     const v = this.formationForm.value;
     this.http.post(`${API}/candidats/${this.currentUser.id}/formations`, v).subscribe({
-      next: () => {
-        this.loadFormations();
-        addAnother ? this.initFormationForm() : (this.activeSection = 'profil-cv');
-      },
-      error: () => {
-        this.formations = [...this.formations, { ...v, id: Date.now() }];
-        if (!addAnother) this.activeSection = 'profil-cv';
-        else this.initFormationForm();
-      }
+      next: () => { this.loadFormations(); addAnother ? this.initFormationForm() : (this.activeSection = 'profil-cv'); this.cdr.detectChanges(); },
+      error: () => { this.formations = [...this.formations, { ...v, id: Date.now() }]; if (!addAnother) this.activeSection = 'profil-cv'; else this.initFormationForm(); }
     });
   }
 
   saveExperience(addAnother = false): void {
     const v = this.experienceForm.value;
     this.http.post(`${API}/candidats/${this.currentUser.id}/experiences`, v).subscribe({
-      next: () => {
-        this.loadExperiences();
-        addAnother ? this.initExperienceForm() : (this.activeSection = 'profil-cv');
-      },
-      error: () => {
-        this.experiences = [...this.experiences, { ...v, id: Date.now() }];
-        if (!addAnother) this.activeSection = 'profil-cv';
-        else this.initExperienceForm();
-      }
+      next: () => { this.loadExperiences(); addAnother ? this.initExperienceForm() : (this.activeSection = 'profil-cv'); this.cdr.detectChanges(); },
+      error: () => { this.experiences = [...this.experiences, { ...v, id: Date.now() }]; if (!addAnother) this.activeSection = 'profil-cv'; else this.initExperienceForm(); }
     });
   }
 
   saveLangue(addAnother = false): void {
     const v = this.langueForm.value;
     this.http.post(`${API}/candidats/${this.currentUser.id}/langues`, v).subscribe({
-      next: () => {
-        this.loadLangues();
-        addAnother ? this.initLangueForm() : (this.activeSection = 'profil-cv');
-      },
-      error: () => {
-        this.langues = [...this.langues, { ...v, id: Date.now() }];
-        if (!addAnother) this.activeSection = 'profil-cv';
-        else this.initLangueForm();
-      }
+      next: () => { this.loadLangues(); addAnother ? this.initLangueForm() : (this.activeSection = 'profil-cv'); this.cdr.detectChanges(); },
+      error: () => { this.langues = [...this.langues, { ...v, id: Date.now() }]; if (!addAnother) this.activeSection = 'profil-cv'; else this.initLangueForm(); }
     });
   }
 
-  // ✅ Upload document vers le backend
   onDocumentSelected(event: Event, type: 'cv' | 'certification'): void {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
-
     const file = input.files[0];
     const docType = type === 'cv' ? 'CV' : 'CERTIFICATION';
-
     this.uploadInProgress = true;
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', docType);
-
-    this.http.post<CandidatDocument>(
-      `${API}/candidats/${this.currentUser.id}/documents`,
-      formData
-    ).subscribe({
-      next: () => {
-        this.uploadInProgress = false;
-        this.loadDocuments(); // ✅ recharge depuis backend
-      },
+    this.http.post<CandidatDocument>(`${API}/candidats/${this.currentUser.id}/documents`, formData).subscribe({
+      next: () => { this.uploadInProgress = false; this.loadDocuments(); },
       error: () => {
-        // Fallback local si backend indisponible
         this.uploadInProgress = false;
-        const localDoc: CandidatDocument = {
-          fileName: file.name,
-          documentType: docType,
-          sizeBytes: file.size
-        };
-        if (type === 'cv') this.cvDocuments.push(localDoc);
-        else this.certificationDocuments.push(localDoc);
+        const localDoc: CandidatDocument = { fileName: file.name, documentType: docType, sizeBytes: file.size };
+        if (type === 'cv') this.cvDocuments.push(localDoc); else this.certificationDocuments.push(localDoc);
       }
     });
-
     input.value = '';
   }
 
-  // ✅ Supprimer document du backend
   removeDocument(type: 'cv' | 'certification', index: number): void {
-    const doc = type === 'cv'
-      ? this.cvDocuments[index]
-      : this.certificationDocuments[index];
-
+    const doc = type === 'cv' ? this.cvDocuments[index] : this.certificationDocuments[index];
     if (!doc.id) {
-      // Document local seulement
-      if (type === 'cv') this.cvDocuments.splice(index, 1);
-      else this.certificationDocuments.splice(index, 1);
+      if (type === 'cv') this.cvDocuments.splice(index, 1); else this.certificationDocuments.splice(index, 1);
       return;
     }
-
-    this.http.delete(
-      `${API}/candidats/${this.currentUser.id}/documents/${doc.id}`
-    ).subscribe({
+    this.http.delete(`${API}/candidats/${this.currentUser.id}/documents/${doc.id}`).subscribe({
       next: () => this.loadDocuments(),
-      error: () => {
-        if (type === 'cv') this.cvDocuments.splice(index, 1);
-        else this.certificationDocuments.splice(index, 1);
-      }
+      error: () => { if (type === 'cv') this.cvDocuments.splice(index, 1); else this.certificationDocuments.splice(index, 1); }
     });
   }
 
@@ -486,116 +448,68 @@ export class CandidatDashboardComponent implements OnInit {
   deleteFormation(id?: number): void {
     if (!id) return;
     this.http.delete(`${API}/candidats/${this.currentUser.id}/formations/${id}`).subscribe({
-      next: () => this.loadFormations(),
-      error: () => this.formations = this.formations.filter(f => f.id !== id)
+      next: () => this.loadFormations(), error: () => this.formations = this.formations.filter(f => f.id !== id)
     });
   }
 
   deleteExperience(id?: number): void {
     if (!id) return;
     this.http.delete(`${API}/candidats/${this.currentUser.id}/experiences/${id}`).subscribe({
-      next: () => this.loadExperiences(),
-      error: () => this.experiences = this.experiences.filter(e => e.id !== id)
+      next: () => this.loadExperiences(), error: () => this.experiences = this.experiences.filter(e => e.id !== id)
     });
   }
 
   deleteLangue(id?: number): void {
     if (!id) return;
     this.http.delete(`${API}/candidats/${this.currentUser.id}/langues/${id}`).subscribe({
-      next: () => this.loadLangues(),
-      error: () => this.langues = this.langues.filter(l => l.id !== id)
+      next: () => this.loadLangues(), error: () => this.langues = this.langues.filter(l => l.id !== id)
     });
   }
 
   // ===== TAGS =====
-
   ajouterTag(): void {
     if (!this.selectedTagId) return;
-    const payload = {
-      candidatId: this.currentUser.id,
-      tagId: this.selectedTagId,
-      niveau: this.selectedNiveau,
-      anneesPratique: this.anneesPratique
-    };
+    const payload = { candidatId: this.currentUser.id, tagId: this.selectedTagId, niveau: this.selectedNiveau, anneesPratique: this.anneesPratique };
     this.http.post(`${API}/profil-tags`, payload).subscribe({
       next: () => { this.loadProfilTags(); this.selectedTagId = null; this.anneesPratique = 0; }
     });
   }
 
   supprimerTag(id: number): void {
-    this.http.delete(`${API}/profil-tags/${id}`).subscribe({
-      next: () => this.loadProfilTags()
-    });
+    this.http.delete(`${API}/profil-tags/${id}`).subscribe({ next: () => this.loadProfilTags() });
   }
 
   // ===== OFFRES =====
-
   filterOffres(): void {
     const q = this.searchQuery.toLowerCase();
-    this.filteredOffres = this.offres.filter(o =>
-      o.titre.toLowerCase().includes(q) || o.localisation.toLowerCase().includes(q)
-    );
+    this.filteredOffres = this.offres.filter(o => o.titre.toLowerCase().includes(q) || o.localisation.toLowerCase().includes(q));
   }
 
-  ouvrirPostuler(offre: Offre): void {
-    this.selectedOffre = offre;
-    this.showPostulerModal = true;
-    this.lettreMotivation = '';
-  }
-
-  ouvrirDetailsOffre(offre: Offre): void {
-    this.selectedOffre = offre;
-    this.showOffreDetailsModal = true;
-  }
-
-  fermerDetailsOffre(): void {
-    this.showOffreDetailsModal = false;
-  }
-
-  postulerDepuisDetails(): void {
-    if (!this.selectedOffre) return;
-    this.showOffreDetailsModal = false;
-    this.ouvrirPostuler(this.selectedOffre);
-  }
+  ouvrirPostuler(offre: Offre): void { this.selectedOffre = offre; this.showPostulerModal = true; this.lettreMotivation = ''; }
+  ouvrirDetailsOffre(offre: Offre): void { this.selectedOffre = offre; this.showOffreDetailsModal = true; }
+  fermerDetailsOffre(): void { this.showOffreDetailsModal = false; }
+  postulerDepuisDetails(): void { if (!this.selectedOffre) return; this.showOffreDetailsModal = false; this.ouvrirPostuler(this.selectedOffre); }
 
   postuler(): void {
     if (!this.selectedOffre) return;
-    const payload = {
-      candidatId: this.currentUser.id,
-      offreId: this.selectedOffre.id,
-      lettreMotivation: this.lettreMotivation
-    };
+    const payload = { candidatId: this.currentUser.id, offreId: this.selectedOffre.id, lettreMotivation: this.lettreMotivation };
     this.http.post<any>(`${API}/candidatures`, payload).subscribe({
-      next: (result) => {
-        this.showPostulerModal = false;
-        this.loadCandidatures();
-        alert(`Candidature envoyée ! Score : ${result.scoreTotal?.toFixed(1)}%`);
-      },
+      next: (result) => { this.showPostulerModal = false; this.loadCandidatures(); alert(`Candidature envoyée ! Score : ${result.scoreTotal?.toFixed(1)}%`); },
       error: (err) => alert(err?.error?.message || 'Erreur lors de la candidature')
     });
   }
 
   // ===== SECTEURS =====
-
   addSejour(): void { this.sejours.push({ pays: '', dureeJours: 0 }); }
-
   toggleSecteur(secteur: string): void {
     const idx = this.selectedSecteurs.indexOf(secteur);
     idx >= 0 ? this.selectedSecteurs.splice(idx, 1) : this.selectedSecteurs.push(secteur);
   }
-
   hasSecteur(secteur: string): boolean { return this.selectedSecteurs.includes(secteur); }
 
   // ===== PROFILE COMPLETION =====
-
-  hasPersonalInfo(): boolean {
-    return !!(this.currentUser?.nom && this.currentUser?.prenom && this.currentUser?.telephone);
-  }
-
-  hasProfessionalInfo(): boolean {
-    return !!(this.currentUser?.titreProfessionnel || this.currentUser?.situationProfessionnelle);
-  }
-
+  hasPersonalInfo(): boolean { return !!(this.currentUser?.nom && this.currentUser?.prenom && this.currentUser?.telephone); }
+  hasProfessionalInfo(): boolean { return !!(this.currentUser?.titreProfessionnel || this.currentUser?.situationProfessionnelle); }
   getProfileCompletion(): number {
     let pct = 0;
     if (this.hasPersonalInfo()) pct += 15;
@@ -608,97 +522,45 @@ export class CandidatDashboardComponent implements OnInit {
   }
 
   // ===== HELPERS =====
-
   getInitials(): string {
     if (!this.currentUser) return '?';
     return `${(this.currentUser.prenom || '?')[0]}${(this.currentUser.nom || '?')[0]}`.toUpperCase();
   }
-
-  getScoreColor(score: number): string {
-    if (score >= 70) return '#22c55e';
-    if (score >= 50) return '#f59e0b';
-    return '#ef4444';
+  getCandidateLocation(): string {
+    return [this.currentUser?.ville, this.currentUser?.pays]
+      .filter(Boolean)
+      .join(', ');
   }
-
+  getScoreColor(score: number): string {
+    if (score >= 70) return '#22c55e'; if (score >= 50) return '#f59e0b'; return '#ef4444';
+  }
   getStatutClass(statut: string): string {
-    const map: any = {
-      'A_TRIER': 'statut-trier',
-      'ENTRETIEN': 'statut-entretien',
-      'RETENU': 'statut-retenu',
-      'REFUSE': 'statut-refuse'
-    };
+    const map: any = { 'A_TRIER': 'statut-trier', 'ENTRETIEN': 'statut-entretien', 'RETENU': 'statut-retenu', 'REFUSE': 'statut-refuse' };
     return map[statut] || '';
   }
-
   getNiveauColor(niveau: string): string {
-    const map: any = {
-      'DEBUTANT': '#6366f1',
-      'INTERMEDIAIRE': '#f59e0b',
-      'EXPERT': '#22c55e'
-    };
+    const map: any = { 'DEBUTANT': '#6366f1', 'INTERMEDIAIRE': '#f59e0b', 'EXPERT': '#22c55e' };
     return map[niveau] || '#6366f1';
   }
-
   getNiveauProgress(niveau: string): number {
     const n = (niveau || '').toUpperCase();
-    if (n === 'EXPERT') return 100;
-    if (n === 'INTERMEDIAIRE' || n === 'INTERMÉDIAIRE') return 50;
-    if (n === 'AVANCE' || n === 'AVANCÉ') return 75;
-    if (n === 'DEBUTANT' || n === 'DÉBUTANT') return 25;
+    if (n === 'EXPERT') return 100; if (n === 'INTERMEDIAIRE' || n === 'INTERMÉDIAIRE') return 50;
+    if (n === 'AVANCE' || n === 'AVANCÉ') return 75; if (n === 'DEBUTANT' || n === 'DÉBUTANT') return 25;
     return 40;
   }
-
-  getDocumentName(doc: CandidatDocument): string {
-    return doc.fileName || doc.nom || 'Document';
-  }
-
+  getDocumentName(doc: CandidatDocument): string { return doc.fileName || doc.nom || 'Document'; }
   getDocumentSize(doc: CandidatDocument): string {
     if (!doc.sizeBytes) return '';
     const kb = doc.sizeBytes / 1024;
     return kb < 1024 ? `${Math.round(kb)} Ko` : `${(kb / 1024).toFixed(1)} Mo`;
   }
-
-  toggleUserMenu(event: Event): void {
-    event.stopPropagation();
-    this.showUserMenu = !this.showUserMenu;
-  }
-
+  toggleUserMenu(event: Event): void { event.stopPropagation(); this.showUserMenu = !this.showUserMenu; }
   closeUserMenu(): void { this.showUserMenu = false; }
-
-  goToFromUserMenu(section: string): void {
-    this.activeSection = section;
-    this.closeUserMenu();
-  }
-
-  goToSettings(): void {
-    this.activeSection = 'personal-info';
-    this.initProfileForm();
-    this.closeUserMenu();
-  }
-
-  logout(): void {
-    this.closeUserMenu();
-    this.removeStorageItem('token');
-    this.removeStorageItem('utilisateur');
-    this.router.navigate(['/auth']);
-  }
-
-  private getStorageItem(key: string): string | null {
-    if (typeof localStorage === 'undefined') return null;
-    return localStorage.getItem(key);
-  }
-
-  private setStorageItem(key: string, value: string): void {
-    if (typeof localStorage === 'undefined') return;
-    localStorage.setItem(key, value);
-  }
-
-  private removeStorageItem(key: string): void {
-    if (typeof localStorage === 'undefined') return;
-    localStorage.removeItem(key);
-  }
-
-  descriptionLength(): number {
-    return this.formationForm?.get('description')?.value?.length || 0;
-  }
+  goToFromUserMenu(section: string): void { this.activeSection = section; this.closeUserMenu(); }
+  goToSettings(): void { this.activeSection = 'personal-info'; this.initProfileForm(); this.closeUserMenu(); }
+  logout(): void { this.closeUserMenu(); this.removeStorageItem('token'); this.removeStorageItem('utilisateur'); this.router.navigate(['/auth']); }
+  private getStorageItem(k: string): string | null { return typeof localStorage === 'undefined' ? null : localStorage.getItem(k); }
+  private setStorageItem(k: string, v: string): void { if (typeof localStorage !== 'undefined') localStorage.setItem(k, v); }
+  private removeStorageItem(k: string): void { if (typeof localStorage !== 'undefined') localStorage.removeItem(k); }
+  descriptionLength(): number { return this.formationForm?.get('description')?.value?.length || 0; }
 }

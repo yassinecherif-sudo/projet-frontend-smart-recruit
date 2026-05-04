@@ -24,11 +24,6 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(['CANDIDAT'])]
   },
   {
-    path: 'rucrutteur-dashboard',
-    component: RucrutteurDashboard,
-    canActivate: [authGuard, roleGuard(['RECRUTEUR'])]
-  },
-  {
     path: 'recruteur-dashboard',
     component: RucrutteurDashboard,
     canActivate: [authGuard, roleGuard(['RECRUTEUR'])]

@@ -4,7 +4,8 @@
     <span>Smart<strong>Recruit</strong></span>
   </div>
   <a class="nav-back" (click)="goHome()">
-    <mat-icon>arrow_back</mat-icon> Retour à l'accueil
+    <mat-icon>arrow_back</mat-icon>
+    <span>Retour à l'accueil</span>
   </a>
 </nav>
 
@@ -21,7 +22,7 @@
     <div class="left-content">
       <div class="left-badge">
         <mat-icon>auto_awesome</mat-icon>
-        IA Générative · Matching Intelligent
+        <span>IA Générative · Matching Intelligent</span>
       </div>
       <h1>Trouvez le poste<br>qui vous <span class="gradient-text">ressemble</span></h1>
       <p>SmartRecruit connecte talents et recruteurs grâce à un moteur IA qui calcule votre score de compatibilité en temps réel.</p>
@@ -65,11 +66,11 @@
         <div class="form-tabs">
           <button class="tab-btn" [class.active]="activeTab === 'login'" (click)="activeTab = 'login'">
             <mat-icon>login</mat-icon>
-            Connexion
+            <span>Connexion</span>
           </button>
           <button class="tab-btn" [class.active]="activeTab === 'register'" (click)="activeTab = 'register'">
             <mat-icon>person_add</mat-icon>
-            Inscription
+            <span>Inscription</span>
           </button>
         </div>
 
@@ -118,9 +119,15 @@
 
             <button type="submit" class="submit-btn">
               @if (loading) {
-                <span class="spinner"></span> Connexion en cours...
+                <span class="btn-content">
+                  <span class="spinner"></span>
+                  <span>Connexion en cours...</span>
+                </span>
               } @else {
-                <mat-icon>login</mat-icon> Se connecter
+                <span class="btn-content">
+                  <mat-icon>login</mat-icon>
+                  <span>Se connecter</span>
+                </span>
               }
             </button>
           </form>
@@ -205,7 +212,10 @@
           <input type="email" [(ngModel)]="resetEmail" placeholder="vous@exemple.com">
         </div>
         <button class="submit-btn mt16" (click)="sendResetCode()" [disabled]="!resetEmail.trim()">
-          <mat-icon>send</mat-icon> Envoyer le code
+            <span class="btn-content">
+              <mat-icon>send</mat-icon>
+              <span>Envoyer le code</span>
+            </span>
         </button>
       }
 
@@ -224,7 +234,10 @@
           }
         </div>
         <button class="submit-btn mt16" (click)="validateOtp()" [disabled]="otpCode.length < 6">
-          <mat-icon>verified</mat-icon> Valider le code
+            <span class="btn-content">
+              <mat-icon>verified</mat-icon>
+              <span>Valider le code</span>
+            </span>
         </button>
       }
 
@@ -236,7 +249,10 @@
         </div>
         <button class="submit-btn mt16" (click)="changePassword()"
                 [disabled]="!newPassword || newPassword.length < 6">
-          <mat-icon>check_circle</mat-icon> Confirmer
+          <span class="btn-content">
+            <mat-icon>check_circle</mat-icon>
+            <span>Confirmer</span>
+          </span>
         </button>
       }
 

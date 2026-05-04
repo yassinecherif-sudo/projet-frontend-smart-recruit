@@ -1,7 +1,89 @@
-<div class="app-layout" [class.dark-mode]="darkMode">
+<div class="app-layout">
 
   @if (showUserMenu) {
     <button class="menu-backdrop" type="button" (click)="closeUserMenu()" aria-label="Fermer le menu utilisateur"></button>
+  }
+
+  @if (showNotifPanel) {
+    <div class="notif-backdrop" (click)="showNotifPanel = false"></div>
+    <div class="notif-panel">
+      <div class="notif-panel-header">
+        <span>Notifications</span>
+        <div class="notif-header-actions">
+          @if (nbNonLues > 0) {
+            <button class="notif-all-read" (click)="marquerToutesLues()">Tout marquer lu</button>
+          }
+          <button class="notif-close" (click)="showNotifPanel = false">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+      <div class="notif-list">
+        @if (notifications.length === 0) {
+          <div class="notif-empty">
+            <mat-icon>notifications_none</mat-icon>
+            <span>Aucune notification</span>
+          </div>
+        }
+        @for (n of notifications; track n.id) {
+          <div class="notif-item" [class.unread]="!n.lu" (click)="marquerLue(n.id)">
+            <div class="notif-icon"
+                 [style.background]="getNotifColor(n.type) + '22'"
+                 [style.color]="getNotifColor(n.type)">
+              <mat-icon>{{ getNotifIcon(n.type) }}</mat-icon>
+            </div>
+            <div class="notif-content">
+              <p class="notif-message">{{ n.message }}</p>
+              <span class="notif-time">{{ formatNotifDate(n.dateEnvoi) }}</span>
+            </div>
+            @if (!n.lu) { <span class="notif-dot"></span> }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (showNotifPanel) {
+    <div class="notif-backdrop" (click)="showNotifPanel = false"></div>
+    <div class="notif-panel">
+      <div class="notif-panel-header">
+        <span>Notifications</span>
+        <div class="notif-header-actions">
+          @if (nbNonLues > 0) {
+            <button class="notif-all-read" (click)="marquerToutesLues()">
+              Tout marquer lu
+            </button>
+          }
+          <button class="notif-close" (click)="showNotifPanel = false">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+      <div class="notif-list">
+        @if (notifications.length === 0) {
+          <div class="notif-empty">
+            <mat-icon>notifications_none</mat-icon>
+            <span>Aucune notification</span>
+          </div>
+        }
+        @for (n of notifications; track n.id) {
+          <div class="notif-item" [class.unread]="!n.lu" (click)="marquerLue(n.id)">
+            <div class="notif-icon"
+                 [style.background]="getNotifColor(n.type) + '22'"
+                 [style.color]="getNotifColor(n.type)">
+              <mat-icon>{{ getNotifIcon(n.type) }}</mat-icon>
+            </div>
+            <div class="notif-content">
+              <p class="notif-message">{{ n.message }}</p>
+              <span class="notif-time">{{ formatNotifDate(n.dateEnvoi) }}</span>
+            </div>
+            @if (!n.lu) {
+              <span class="notif-dot"></span>
+            }
+          </div>
+        }
+      </div>
+    </div>
   }
 
   <!-- ===== HEADER ===== -->
@@ -11,12 +93,13 @@
     </div>
     <nav class="header-nav">
       <a (click)="activeSection='offres'">Offres d'emploi</a>
-      <a>Formations</a>
-      <a>Contact</a>
     </nav>
     <div class="header-actions">
-      <button class="dark-toggle" (click)="darkMode = !darkMode" title="Mode sombre">
-        <mat-icon>{{ darkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      <button class="notif-bell-btn" (click)="toggleNotifPanel()" title="Notifications">
+        <mat-icon>notifications</mat-icon>
+        @if (nbNonLues > 0) {
+          <span class="notif-badge">{{ nbNonLues }}</span>
+        }
       </button>
       <div class="user-menu-wrapper">
         <button class="user-chip" type="button" (click)="toggleUserMenu($event)">
@@ -132,7 +215,7 @@
               } @else {
                 <div class="cv-info-row">
                   <span>{{ currentUser?.prenom }} {{ currentUser?.nom }}</span>
-                  @if (currentUser?.ville) { <span>{{ currentUser?.ville }}, {{ currentUser?.pays }}</span> }
+                  @if (getCandidateLocation()) { <span>{{ getCandidateLocation() }}</span> }
                   @if (currentUser?.telephone) { <span>{{ currentUser?.telephone }}</span> }
                 </div>
               }
@@ -697,7 +780,7 @@
               <div class="profile-contact-info">
                 <div class="contact-row"><mat-icon>email</mat-icon><span>{{ currentUser?.email }}</span></div>
                 <div class="contact-row"><mat-icon>phone</mat-icon><span>{{ currentUser?.telephone || 'Non renseigné' }}</span></div>
-                <div class="contact-row"><mat-icon>location_on</mat-icon><span>{{ currentUser?.ville }}, {{ currentUser?.pays }}</span></div>
+                <div class="contact-row"><mat-icon>location_on</mat-icon><span>{{ getCandidateLocation() || 'Non renseigné' }}</span></div>
               </div>
               <button class="btn-full-edit" (click)="activeSection='personal-info'">Modifier le profil</button>
             </aside>

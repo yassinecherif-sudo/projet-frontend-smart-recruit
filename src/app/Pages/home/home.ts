@@ -4,6 +4,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectorRef } from '@angular/core';
 
 
 const API = 'http://localhost:8083';
@@ -78,7 +79,8 @@ export class Home implements OnInit {
 
   constructor(
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -113,11 +115,13 @@ export class Home implements OnInit {
         const mapped = openOffres.map((offre, index) => this.mapOffreForHome(offre, index));
         this.featuredOffres = mapped.filter(o => !!o.titre).slice(0, 6);
         this.isLoadingOffres = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.featuredOffres = [];
         this.isLoadingOffres = false;
         this.offresError = 'Impossible de charger les offres pour le moment.';
+       
       }
     });
   }

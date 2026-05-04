@@ -23,7 +23,7 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
         router.navigate(['/candidat-dashboard']);
         break;
       case 'RECRUTEUR':
-        router.navigate(['/rucrutteur-dashboard']);
+        router.navigate(['/recruteur-dashboard']);
         break;
       case 'ADMIN':
         router.navigate(['/admin-dashboard']);

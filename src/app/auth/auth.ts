@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { Auth } from '../Services/auth';
 
 @Component({
@@ -11,7 +10,7 @@ import { Auth } from '../Services/auth';
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, FormsModule,
-    MatIconModule, MatButtonModule,
+    MatIconModule,
   ],
   templateUrl: './auth.html',
   styleUrls: ['./auth.scss'],
@@ -37,7 +36,7 @@ export class AuthComponent implements OnInit {
   resetOk = false;
   otpValidationLoading = false;
 
-  // ✅ Modal choix rôle
+  // Modal choix rôle
   showRoleModal = false;
 
   loginForm!: FormGroup;
@@ -102,7 +101,7 @@ export class AuthComponent implements OnInit {
   private redirectByRole(role: string): void {
     switch (role) {
       case 'CANDIDAT':  this.router.navigate(['/candidat-dashboard']); break;
-      case 'RECRUTEUR': this.router.navigate(['/rucrutteur-dashboard']); break;
+      case 'RECRUTEUR': this.router.navigate(['/recruteur-dashboard']); break;
       case 'ADMIN':     this.router.navigate(['/admin-dashboard']); break;
       default:          this.router.navigate(['/']);
     }

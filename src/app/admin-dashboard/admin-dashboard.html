@@ -85,7 +85,6 @@
         </div>
       </div>
 
-      <!-- Actions rapides -->
       <div class="section-title">Actions rapides</div>
       <div class="quick-actions">
         <div class="quick-card" (click)="activeSection='utilisateurs'">
@@ -144,9 +143,7 @@
                 </td>
                 <td class="email-cell">{{ u.email }}</td>
                 <td>
-                  <span class="role-badge" [class]="getRoleClass(u.role)">
-                    {{ u.role }}
-                  </span>
+                  <span class="role-badge" [class]="getRoleClass(u.role)">{{ u.role }}</span>
                 </td>
                 <td>
                   @if (u.actif) {
@@ -158,15 +155,11 @@
                 <td>
                   <div class="action-btns">
                     @if (!u.actif) {
-                      <button class="icon-btn green"
-                              (click)="activerCompte(u.id)"
-                              title="Activer">
+                      <button class="icon-btn green" (click)="activerCompte(u.id)" title="Activer">
                         <mat-icon>check_circle</mat-icon>
                       </button>
                     }
-                    <button class="icon-btn danger"
-                            (click)="supprimerUtilisateur(u.id)"
-                            title="Supprimer">
+                    <button class="icon-btn danger" (click)="supprimerUtilisateur(u.id)" title="Supprimer">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
@@ -175,7 +168,6 @@
             }
           </tbody>
         </table>
-
         @if (filteredUtilisateurs.length === 0) {
           <div class="empty-state">
             <mat-icon>people_outline</mat-icon>
@@ -202,36 +194,27 @@
                placeholder="Rechercher un tag...">
       </div>
 
-      <!-- Tags par catégorie -->
-      @for (cat of categories; track cat) {
+      @for (cat of categoriesForDisplay; track cat) {
         @if (getTagsByCategorie(cat).length > 0) {
           <div class="categorie-section">
             <div class="categorie-header">
-              <span class="categorie-dot"
-                    [style.background]="getCategorieColor(cat)"></span>
+              <span class="categorie-dot" [style.background]="getCategorieColor(cat)"></span>
               <strong>{{ cat }}</strong>
-              <span class="count">
-                {{ getTagsByCategorie(cat).length }}
-              </span>
+              <span class="count">{{ getTagsByCategorie(cat).length }}</span>
             </div>
             <div class="tags-grid">
               @for (tag of filteredTags; track tag.id) {
                 @if (tag.categorie === cat) {
                   <div class="tag-card">
                     <div class="tag-top">
-                      <span class="tag-libelle"
-                            [style.color]="getCategorieColor(tag.categorie)">
+                      <span class="tag-libelle" [style.color]="getCategorieColor(tag.categorie)">
                         {{ tag.libelle }}
                       </span>
                       <div class="tag-actions">
-                        <button class="icon-btn-sm"
-                                (click)="ouvrirModifierTag(tag)"
-                                title="Modifier">
+                        <button class="icon-btn-sm" (click)="ouvrirModifierTag(tag)" title="Modifier">
                           <mat-icon>edit</mat-icon>
                         </button>
-                        <button class="icon-btn-sm danger"
-                                (click)="supprimerTag(tag.id)"
-                                title="Supprimer">
+                        <button class="icon-btn-sm danger" (click)="supprimerTag(tag.id)" title="Supprimer">
                           <mat-icon>delete</mat-icon>
                         </button>
                       </div>
@@ -258,67 +241,231 @@
       }
     }
 
-    <!-- STATISTIQUES -->
+    <!-- STATISTIQUES AVANCÉES -->
     @if (activeSection === 'statistiques') {
       <div class="page-header">
-        <h1>Statistiques Plateforme</h1>
-        <p>Vue d'ensemble de l'activité Smart-Recruit</p>
+        <h1>Statistiques Plateforme 📊</h1>
+        <p>Données en temps réel — Smart-Recruit</p>
       </div>
 
-      <div class="stats-big-grid">
-        <div class="stat-big-card purple">
-          <mat-icon>people_outline</mat-icon>
-          <span class="big-val">{{ stats.totalUtilisateurs }}</span>
-          <span class="big-label">Utilisateurs</span>
+      @if (statsLoading) {
+        <div class="stats-loading">
+          <mat-icon class="spin">autorenew</mat-icon>
+          <span>Chargement des statistiques...</span>
         </div>
-        <div class="stat-big-card blue">
-          <mat-icon>person_search</mat-icon>
-          <span class="big-val">{{ stats.totalCandidats }}</span>
-          <span class="big-label">Candidats</span>
-        </div>
-        <div class="stat-big-card teal">
-          <mat-icon>business_center</mat-icon>
-          <span class="big-val">{{ stats.totalRecruteurs }}</span>
-          <span class="big-label">Recruteurs</span>
-        </div>
-        <div class="stat-big-card amber">
-          <mat-icon>local_offer</mat-icon>
-          <span class="big-val">{{ stats.totalTags }}</span>
-          <span class="big-label">Tags</span>
-        </div>
-        <div class="stat-big-card green">
-          <mat-icon>work_outline</mat-icon>
-          <span class="big-val">{{ stats.totalOffres }}</span>
-          <span class="big-label">Offres</span>
-        </div>
-      </div>
+      }
 
-      <!-- Répartition par rôle -->
-      <div class="section-title" style="margin-top: 32px;">Répartition des utilisateurs</div>
-      <div class="repartition-card">
-        @if (stats.totalUtilisateurs > 0) {
-          <div class="repartition-bar">
-            <div class="bar-segment candidat"
-                 [style.width.%]="(stats.totalCandidats / stats.totalUtilisateurs) * 100"
-                 title="Candidats">
+      @if (!statsLoading && advancedStats) {
+
+        <!-- KPI CARDS -->
+        <div class="kpi-grid">
+          <div class="kpi-card purple">
+            <mat-icon>people_outline</mat-icon>
+            <span class="kpi-val">{{ advancedStats.totalUtilisateurs }}</span>
+            <span class="kpi-label">Utilisateurs</span>
+          </div>
+          <div class="kpi-card blue">
+            <mat-icon>work_outline</mat-icon>
+            <span class="kpi-val">{{ advancedStats.totalOffres }}</span>
+            <span class="kpi-label">Offres publiées</span>
+          </div>
+          <div class="kpi-card teal">
+            <mat-icon>assignment_turned_in</mat-icon>
+            <span class="kpi-val">{{ advancedStats.totalCandidatures }}</span>
+            <span class="kpi-label">Candidatures</span>
+          </div>
+          <div class="kpi-card green">
+            <mat-icon>trending_up</mat-icon>
+            <span class="kpi-val">{{ advancedStats.scoreMoyen }}%</span>
+            <span class="kpi-label">Score moyen</span>
+          </div>
+          <div class="kpi-card amber">
+            <mat-icon>schedule</mat-icon>
+            <span class="kpi-val">{{ advancedStats.tempsMoyenRecrutementJours }}j</span>
+            <span class="kpi-label">Temps moyen recrutement</span>
+          </div>
+          <div class="kpi-card coral">
+            <mat-icon>check_circle_outline</mat-icon>
+            <span class="kpi-val">{{ advancedStats.tauxAcceptation }}%</span>
+            <span class="kpi-label">Taux d'acceptation</span>
+          </div>
+        </div>
+
+        <!-- Graphique mois + Pipeline Kanban -->
+        <div class="stats-row-2">
+          <div class="stat-panel">
+            <div class="panel-title">
+              <mat-icon>bar_chart</mat-icon> Candidatures — 6 derniers mois
             </div>
-            <div class="bar-segment recruteur"
-                 [style.width.%]="(stats.totalRecruteurs / stats.totalUtilisateurs) * 100"
-                 title="Recruteurs">
+            <div class="bar-chart-wrap">
+              @for (m of advancedStats.candidaturesParMois; track m.mois) {
+                <div class="bar-col">
+                  <span class="bar-count">{{ m.total }}</span>
+                  <div class="bar-rect"
+                       [style.height]="getBarHeight(m.total, advancedStats.candidaturesParMois)"
+                       [style.background]="m.total > 0 ? '#6366f1' : 'rgba(255,255,255,0.08)'">
+                  </div>
+                  <span class="bar-label">{{ getMoisLabel(m.mois) }}</span>
+                </div>
+              }
             </div>
           </div>
-          <div class="repartition-legend">
-            <div class="legend-item">
-              <span class="dot candidat"></span>
-              <span>Candidats — {{ stats.totalCandidats }}</span>
+
+          <div class="stat-panel">
+            <div class="panel-title">
+              <mat-icon>view_kanban</mat-icon> Pipeline candidatures
             </div>
-            <div class="legend-item">
-              <span class="dot recruteur"></span>
-              <span>Recruteurs — {{ stats.totalRecruteurs }}</span>
+            <div class="kanban-stats">
+              <div class="kanban-row">
+                <span class="kanban-dot" style="background:#94a3b8"></span>
+                <span class="kanban-name">À trier</span>
+                <span class="kanban-bar-wrap">
+                  <div class="kanban-bar" style="background:#94a3b8"
+                       [style.width.%]="advancedStats.totalCandidatures > 0 ? (advancedStats.candidaturesATrier / advancedStats.totalCandidatures) * 100 : 0"></div>
+                </span>
+                <span class="kanban-count">{{ advancedStats.candidaturesATrier }}</span>
+              </div>
+              <div class="kanban-row">
+                <span class="kanban-dot" style="background:#3b82f6"></span>
+                <span class="kanban-name">Entretien</span>
+                <span class="kanban-bar-wrap">
+                  <div class="kanban-bar" style="background:#3b82f6"
+                       [style.width.%]="advancedStats.totalCandidatures > 0 ? (advancedStats.candidaturesEntretien / advancedStats.totalCandidatures) * 100 : 0"></div>
+                </span>
+                <span class="kanban-count">{{ advancedStats.candidaturesEntretien }}</span>
+              </div>
+              <div class="kanban-row">
+                <span class="kanban-dot" style="background:#22c55e"></span>
+                <span class="kanban-name">Retenu</span>
+                <span class="kanban-bar-wrap">
+                  <div class="kanban-bar" style="background:#22c55e"
+                       [style.width.%]="advancedStats.totalCandidatures > 0 ? (advancedStats.candidaturesRetenues / advancedStats.totalCandidatures) * 100 : 0"></div>
+                </span>
+                <span class="kanban-count">{{ advancedStats.candidaturesRetenues }}</span>
+              </div>
+              <div class="kanban-row">
+                <span class="kanban-dot" style="background:#ef4444"></span>
+                <span class="kanban-name">Refusé</span>
+                <span class="kanban-bar-wrap">
+                  <div class="kanban-bar" style="background:#ef4444"
+                       [style.width.%]="advancedStats.totalCandidatures > 0 ? (advancedStats.candidaturesRefusees / advancedStats.totalCandidatures) * 100 : 0"></div>
+                </span>
+                <span class="kanban-count">{{ advancedStats.candidaturesRefusees }}</span>
+              </div>
             </div>
           </div>
-        }
-      </div>
+        </div>
+
+        <!-- Top Tags -->
+        <div class="stats-row-2">
+          <div class="stat-panel">
+            <div class="panel-title">
+              <mat-icon>trending_up</mat-icon> Top 10 compétences recherchées
+            </div>
+            @for (tag of advancedStats.topTagsRecherches; track tag.libelle) {
+              <div class="tag-stat-row">
+                <span class="tag-stat-pill"
+                      [style.background]="getCategorieColor(tag.categorie) + '33'"
+                      [style.color]="getCategorieColor(tag.categorie)">{{ tag.libelle }}</span>
+                <div class="tag-stat-bar-wrap">
+                  <div class="tag-stat-bar"
+                       [style.width]="getTagBarWidth(tag.count, advancedStats.topTagsRecherches)"
+                       [style.background]="getCategorieColor(tag.categorie)"></div>
+                </div>
+                <span class="tag-stat-count">{{ tag.count }}</span>
+              </div>
+            }
+            @if (!advancedStats.topTagsRecherches?.length) {
+              <p class="empty-msg">Aucune donnée disponible</p>
+            }
+          </div>
+
+          <div class="stat-panel">
+            <div class="panel-title">
+              <mat-icon>psychology</mat-icon> Top 10 compétences candidats
+            </div>
+            @for (tag of advancedStats.topTagsCandidats; track tag.libelle) {
+              <div class="tag-stat-row">
+                <span class="tag-stat-pill"
+                      [style.background]="getCategorieColor(tag.categorie) + '33'"
+                      [style.color]="getCategorieColor(tag.categorie)">{{ tag.libelle }}</span>
+                <div class="tag-stat-bar-wrap">
+                  <div class="tag-stat-bar"
+                       [style.width]="getTagBarWidth(tag.count, advancedStats.topTagsCandidats)"
+                       [style.background]="getCategorieColor(tag.categorie)"></div>
+                </div>
+                <span class="tag-stat-count">{{ tag.count }}</span>
+              </div>
+            }
+            @if (!advancedStats.topTagsCandidats?.length) {
+              <p class="empty-msg">Aucune donnée disponible</p>
+            }
+          </div>
+        </div>
+
+        <!-- Répartitions -->
+        <div class="stats-row-3">
+          <div class="stat-panel">
+            <div class="panel-title"><mat-icon>description</mat-icon> Type de contrat</div>
+            @for (key of objectKeys(advancedStats.repartitionTypeContrat); track key) {
+              <div class="kanban-row">
+                <span class="kanban-name">{{ key }}</span>
+                <span class="kanban-bar-wrap">
+                  <div class="kanban-bar" style="background:#6366f1"
+                       [style.width.%]="(advancedStats.repartitionTypeContrat[key] / getTotalContrats()) * 100"></div>
+                </span>
+                <span class="kanban-count">{{ advancedStats.repartitionTypeContrat[key] }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="stat-panel">
+            <div class="panel-title"><mat-icon>stairs</mat-icon> Niveau d'expérience</div>
+            @for (key of objectKeys(advancedStats.repartitionNiveauExperience); track key) {
+              <div class="kanban-row">
+                <span class="kanban-name">{{ key }}</span>
+                <span class="kanban-bar-wrap">
+                  <div class="kanban-bar" style="background:#10b981"
+                       [style.width.%]="(advancedStats.repartitionNiveauExperience[key] / getTotalNiveaux()) * 100"></div>
+                </span>
+                <span class="kanban-count">{{ advancedStats.repartitionNiveauExperience[key] }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="stat-panel">
+            <div class="panel-title"><mat-icon>work_outline</mat-icon> Statut des offres</div>
+            <div class="kanban-row">
+              <span class="kanban-dot" style="background:#22c55e"></span>
+              <span class="kanban-name">Ouvertes</span>
+              <span class="kanban-bar-wrap">
+                <div class="kanban-bar" style="background:#22c55e"
+                     [style.width.%]="advancedStats.totalOffres > 0 ? (advancedStats.offresOuvertes / advancedStats.totalOffres) * 100 : 0"></div>
+              </span>
+              <span class="kanban-count">{{ advancedStats.offresOuvertes }}</span>
+            </div>
+            <div class="kanban-row">
+              <span class="kanban-dot" style="background:#f59e0b"></span>
+              <span class="kanban-name">Fermées</span>
+              <span class="kanban-bar-wrap">
+                <div class="kanban-bar" style="background:#f59e0b"
+                     [style.width.%]="advancedStats.totalOffres > 0 ? (advancedStats.offresFermees / advancedStats.totalOffres) * 100 : 0"></div>
+              </span>
+              <span class="kanban-count">{{ advancedStats.offresFermees }}</span>
+            </div>
+            <div class="kanban-row">
+              <span class="kanban-dot" style="background:#94a3b8"></span>
+              <span class="kanban-name">Archivées</span>
+              <span class="kanban-bar-wrap">
+                <div class="kanban-bar" style="background:#94a3b8"
+                     [style.width.%]="advancedStats.totalOffres > 0 ? (advancedStats.offresArchivees / advancedStats.totalOffres) * 100 : 0"></div>
+              </span>
+              <span class="kanban-count">{{ advancedStats.offresArchivees }}</span>
+            </div>
+          </div>
+        </div>
+
+      }
     }
 
   </main>
@@ -337,8 +484,7 @@
       <form [formGroup]="tagForm" (ngSubmit)="soumettreTag()">
         <div class="form-group">
           <label>Libellé *</label>
-          <input formControlName="libelle"
-                 placeholder="Ex: Angular, Python, Docker...">
+          <input formControlName="libelle" placeholder="Ex: Angular, Python, Docker...">
           @if (tagForm.get('libelle')?.invalid && tagForm.get('libelle')?.touched) {
             <span class="field-error">
               <mat-icon>error</mat-icon> Requis
@@ -348,28 +494,34 @@
 
         <div class="form-group">
           <label>Catégorie *</label>
-          <select formControlName="categorie">
-            @for (cat of categories; track cat) {
+          <select formControlName="categorie" (change)="onCategorieChange()">
+            @for (cat of categoriesForForm; track cat) {
               <option [value]="cat">{{ cat }}</option>
             }
+            <option [value]="customCategoryValue">+ Nouvelle catégorie...</option>
           </select>
+
+          @if (isCustomCategorySelected) {
+            <input class="custom-category-input"
+                   type="text"
+                   [(ngModel)]="newCategoryName"
+                   [ngModelOptions]="{standalone: true}"
+                   placeholder="Ex: IA, Sécurité, QA...">
+          }
         </div>
 
-        <!-- Preview -->
         <div class="tag-preview">
           <span>Aperçu :</span>
           <span class="tag-pill"
-                [style.background]="getCategorieColor(tagForm.get('categorie')?.value) + '22'"
-                [style.color]="getCategorieColor(tagForm.get('categorie')?.value)">
+                [style.background]="getCategorieColor(selectedCategoryForPreview) + '33'"
+                [style.color]="getCategorieColor(selectedCategoryForPreview)">
             {{ tagForm.get('libelle')?.value || 'Mon Tag' }}
           </span>
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="btn-cancel"
-                  (click)="showTagModal = false">Annuler</button>
-          <button type="submit" class="btn-submit"
-                  [disabled]="tagForm.invalid">
+          <button type="button" class="btn-cancel" (click)="showTagModal = false">Annuler</button>
+          <button type="submit" class="btn-submit" [disabled]="isTagSubmitDisabled">
             <mat-icon>{{ editTagMode ? 'save' : 'add' }}</mat-icon>
             {{ editTagMode ? 'Sauvegarder' : 'Créer le tag' }}
           </button>

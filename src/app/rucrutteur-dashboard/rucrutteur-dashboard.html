@@ -5,6 +5,12 @@
     <div class="sidebar-brand">
       <mat-icon>psychology</mat-icon>
       <span>Smart<strong>Recruit</strong></span>
+      <button class="notif-bell" (click)="toggleNotifPanel()">
+        <mat-icon>notifications</mat-icon>
+        @if (nbNonLues > 0) {
+          <span class="notif-badge">{{ nbNonLues }}</span>
+        }
+      </button>
     </div>
 
     <div class="sidebar-avatar">
@@ -36,6 +42,52 @@
       </a>
     </div>
   </aside>
+
+  <!-- ===== PANNEAU NOTIFICATIONS ===== -->
+  @if (showNotifPanel) {
+    <div class="notif-backdrop" (click)="showNotifPanel = false"></div>
+    <div class="notif-panel">
+      <div class="notif-panel-header">
+        <span>Notifications</span>
+        <div class="notif-header-actions">
+          @if (nbNonLues > 0) {
+            <button class="notif-all-read" (click)="marquerToutesLues()">
+              Tout marquer lu
+            </button>
+          }
+          <button class="notif-close" (click)="showNotifPanel = false">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="notif-list">
+        @if (notifications.length === 0) {
+          <div class="notif-empty">
+            <mat-icon>notifications_none</mat-icon>
+            <span>Aucune notification</span>
+          </div>
+        }
+        @for (n of notifications; track n.id) {
+          <div class="notif-item" [class.unread]="!n.lu"
+               (click)="marquerLue(n.id)">
+            <div class="notif-icon"
+                 [style.background]="getNotifColor(n.type) + '22'"
+                 [style.color]="getNotifColor(n.type)">
+              <mat-icon>{{ getNotifIcon(n.type) }}</mat-icon>
+            </div>
+            <div class="notif-content">
+              <p class="notif-message">{{ n.message }}</p>
+              <span class="notif-time">{{ formatNotifDate(n.dateEnvoi) }}</span>
+            </div>
+            @if (!n.lu) {
+              <span class="notif-dot"></span>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
 
   <!-- ===== MAIN ===== -->
   <main class="main-content">
@@ -123,57 +175,82 @@
         </div>
       }
 
-      <div class="offres-list">
-        @for (offre of offres; track offre.id) {
-          <div class="offre-card">
-            <div class="offre-top">
-              <div class="offre-info">
-                <h3>{{ offre.titre }}</h3>
-                <div class="offre-meta">
-                  <span><mat-icon>location_on</mat-icon>{{ offre.localisation }}</span>
-                  <span><mat-icon>work_outline</mat-icon>{{ offre.typeContrat }}</span>
-                  <span><mat-icon>payments</mat-icon>{{ offre.salaire }} TND</span>
-                  <span><mat-icon>trending_up</mat-icon>{{ offre.niveauExperienceRequis }}</span>
+      @for (section of offresByStatutSections; track section.key) {
+        <div class="offres-group" [class]="'offres-group status-' + section.key.toLowerCase()">
+          <div class="offres-group-header">
+            <h2>{{ section.title }}</h2>
+            <span>{{ section.offres.length }}</span>
+          </div>
+
+          <div class="offres-list">
+            @for (offre of section.offres; track offre.id) {
+              <div class="offre-card">
+                <div class="offre-top">
+                  <div class="offre-info">
+                    <h3>{{ offre.titre }}</h3>
+                    <div class="offre-meta">
+                      <span><mat-icon>location_on</mat-icon>{{ offre.localisation }}</span>
+                      <span><mat-icon>work_outline</mat-icon>{{ offre.typeContrat }}</span>
+                      <span><mat-icon>payments</mat-icon>{{ offre.salaire }} TND</span>
+                      <span><mat-icon>trending_up</mat-icon>{{ offre.niveauExperienceRequis }}</span>
+                    </div>
+                  </div>
+                  <div class="offre-actions">
+                    <span class="statut-offre" [class]="getStatutOffreClass(offre.statut)">
+                      {{ offre.statut }}
+                    </span>
+                    <button class="icon-btn" (click)="voirCandidatures(offre.id)" title="Voir candidatures">
+                      <mat-icon>people_outline</mat-icon>
+                    </button>
+                    <button class="icon-btn" (click)="ouvrirModifierOffre(offre)" title="Modifier">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button class="icon-btn danger" (click)="supprimerOffre(offre.id)" title="Supprimer">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Tags requis -->
+                @if (offre.tags && offre.tags.length > 0) {
+                  <div class="offre-tags">
+                    @for (tag of offre.tags; track tag.id) {
+                      <span class="tag" [class.obligatoire]="tag.obligatoire">
+                        {{ tag.tagLibelle }}
+                        @if (tag.obligatoire) { <span class="poids">{{ tag.poids }}pts</span> }
+                      </span>
+                    }
+                  </div>
+                }
+
+                <div class="offre-footer">
+                  <span>Score minimum : <strong>{{ offre.scoreMinimum }}%</strong></span>
+                  <span>Clôture : <strong>{{ offre.dateCloture | date:'dd/MM/yyyy' }}</strong></span>
+                </div>
+
+                <!-- Actions statut offre -->
+                <div class="offre-statut-actions">
+                  @if (peutCloturer(offre)) {
+                    <button class="btn-action-offre cloturer" (click)="cloturerOffre(offre.id)">
+                      <mat-icon>lock</mat-icon> Clôturer
+                    </button>
+                  }
+                  @if (peutArchiver(offre)) {
+                    <button class="btn-action-offre archiver" (click)="archiverOffre(offre.id)">
+                      <mat-icon>archive</mat-icon> Archiver
+                    </button>
+                  }
+                  @if (peutRouvrir(offre)) {
+                    <button class="btn-action-offre rouvrir" (click)="rouvrirOffre(offre.id)">
+                      <mat-icon>lock_open</mat-icon> Rouvrir
+                    </button>
+                  }
                 </div>
               </div>
-              <div class="offre-actions">
-                <span class="statut-offre" [class]="getStatutOffreClass(offre.statut)">
-                  {{ offre.statut }}
-                </span>
-                <button class="icon-btn" (click)="voirCandidatures(offre.id)" title="Voir candidatures">
-                  <mat-icon>people_outline</mat-icon>
-                </button>
-                <button class="icon-btn" (click)="ouvrirModifierOffre(offre)" title="Modifier">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button class="icon-btn warn" (click)="cloturerOffre(offre.id)" title="Clôturer">
-                  <mat-icon>lock</mat-icon>
-                </button>
-                <button class="icon-btn danger" (click)="supprimerOffre(offre.id)" title="Supprimer">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </div>
-            </div>
-
-            <!-- Tags requis -->
-            @if (offre.tags && offre.tags.length > 0) {
-              <div class="offre-tags">
-                @for (tag of offre.tags; track tag.id) {
-                  <span class="tag" [class.obligatoire]="tag.obligatoire">
-                    {{ tag.tagLibelle }}
-                    @if (tag.obligatoire) { <span class="poids">{{ tag.poids }}pts</span> }
-                  </span>
-                }
-              </div>
             }
-
-            <div class="offre-footer">
-              <span>Score minimum : <strong>{{ offre.scoreMinimum }}%</strong></span>
-              <span>Clôture : <strong>{{ offre.dateCloture | date:'dd/MM/yyyy' }}</strong></span>
-            </div>
           </div>
-        }
-      </div>
+        </div>
+      }
     }
 
     <!-- CANDIDATURES / PIPELINE KANBAN -->
@@ -183,12 +260,13 @@
         <p>{{ getOffreTitle() }}</p>
       </div>
 
-      <!-- Sélection offre -->
+      <!-- Sélection offre + filtres -->
       <div class="filtres-bar">
         <select [(ngModel)]="selectedOffreId" (change)="loadCandidatures()">
-          <option [value]="null">Sélectionner une offre</option>
+          <option [ngValue]="null">Sélectionner une offre</option>
+          <option [ngValue]="0">Toutes les offres</option>
           @for (offre of offres; track offre.id) {
-            <option [value]="offre.id">{{ offre.titre }}</option>
+            <option [ngValue]="offre.id">{{ offre.titre }}</option>
           }
         </select>
 
@@ -205,95 +283,126 @@
                  min="0" max="100" step="10"
                  (change)="loadCandidatures()">
         </div>
+
+        <div class="drag-hint">
+          <mat-icon>drag_indicator</mat-icon>
+          <span>Glissez les cartes pour changer le statut</span>
+        </div>
       </div>
 
-      <!-- KANBAN -->
-      @if (candidatures.length > 0) {
-        <div class="kanban-board">
+      <!-- KANBAN DRAG & DROP -->
+      @if (candidatures.length > 0 || selectedOffreId !== null) {
 
+        <div class="kanban-board">
           @for (statut of statutsKanban; track statut) {
-            <div class="kanban-col">
+            <div class="kanban-col"
+                 [class.drag-over]="dragOverStatut === statut"
+                 (dragover)="onDragOver($event, statut)"
+                 (dragleave)="onDragLeave()"
+                 (drop)="onDrop($event, statut)">
+
               <div class="kanban-header" [class]="getStatutClass(statut)">
-                <span>{{ statut.replace('_', ' ') }}</span>
-                <span class="count">
-                  {{ candidatures | json | slice:0:0 }}
-                  {{ (candidatures).length }}
-                </span>
+                <div class="kanban-header-left">
+                  <span class="statut-icon">{{ getStatutIcon(statut) }}</span>
+                  <span>{{ getStatutLabel(statut) }}</span>
+                </div>
+                <span class="count">{{ getCandidaturesByStatut(statut).length }}</span>
               </div>
 
-              <div class="kanban-cards">
-                @for (c of candidatures; track c.id) {
-                  @if (c.statut === statut) {
-                    <div class="kanban-card">
-                      <div class="kcard-header">
-                        <strong>{{ getCandidateName(c) }}</strong>
-                        <div class="score-badge"
-                             [style.background]="getScoreColor(c.scoreTotal) + '22'"
-                             [style.color]="getScoreColor(c.scoreTotal)">
-                          {{ c.scoreTotal | number:'1.0-1' }}%
-                        </div>
-                      </div>
+              <div class="kanban-cards"
+                   [class.drop-zone-active]="dragOverStatut === statut">
 
-                      @if (hasCandidateContact(c)) {
-                        <div class="candidate-contact">
-                          @if (getCandidateEmail(c)) {
-                            <div class="contact-line">
-                              <mat-icon>email</mat-icon>
-                              <span>{{ getCandidateEmail(c) }}</span>
-                            </div>
-                          }
-                          @if (getCandidatePhone(c)) {
-                            <div class="contact-line">
-                              <mat-icon>phone</mat-icon>
-                              <span>{{ getCandidatePhone(c) }}</span>
-                            </div>
-                          }
-                          @if (getCandidateLocation(c)) {
-                            <div class="contact-line">
-                              <mat-icon>location_on</mat-icon>
-                              <span>{{ getCandidateLocation(c) }}</span>
-                            </div>
-                          }
-                        </div>
-                      }
+                @for (c of getCandidaturesByStatut(statut); track c.id) {
+                  <div class="kanban-card"
+                       draggable="true"
+                       [class.dragging]="draggingId === c.id"
+                       (dragstart)="onDragStart($event, c)"
+                       (dragend)="onDragEnd()">
 
-                      @if (c.scoreMatching) {
-                        <div class="kcard-scores">
-                          <div class="mini-bar">
-                            <span>Obligatoires</span>
-                            <div class="bar-track">
-                              <div [style.width.%]="c.scoreMatching.scoreObligatoires"
-                                   [style.background]="getScoreColor(c.scoreMatching.scoreObligatoires)">
-                              </div>
-                            </div>
-                          </div>
-                          <div class="mini-bar">
-                            <span>Bonus</span>
-                            <div class="bar-track">
-                              <div [style.width.%]="c.scoreMatching.scoreBonus"
-                                   [style.background]="getScoreColor(c.scoreMatching.scoreBonus)">
-                              </div>
-                            </div>
-                          </div>
-                          <div class="tags-count">
-                            <span class="green">✓ {{ c.scoreMatching.nbTagsCorrespondants }}</span>
-                            <span class="red">✗ {{ c.scoreMatching.nbTagsManquants }}</span>
-                          </div>
-                        </div>
-                      }
+                    <!-- Poignée drag -->
+                    <div class="drag-handle">
+                      <mat-icon>drag_indicator</mat-icon>
+                    </div>
 
-                      <div class="kcard-actions">
-                        @for (s of statutsKanban; track s) {
-                          @if (s !== c.statut) {
-                            <button (click)="changerStatut(c.id, s)"
-                                    [class]="'btn-statut ' + getStatutClass(s)">
-                              {{ s.replace('_', ' ') }}
-                            </button>
-                          }
-                        }
+                    <div class="kcard-header">
+                      <strong>{{ getCandidateName(c) }}</strong>
+                      <div class="score-badge"
+                           [style.background]="getScoreColor(c.scoreTotal) + '22'"
+                           [style.color]="getScoreColor(c.scoreTotal)">
+                        {{ c.scoreTotal | number:'1.0-1' }}%
                       </div>
                     </div>
-                  }
+
+                    @if (hasCandidateContact(c)) {
+                      <div class="candidate-contact">
+                        @if (getCandidateEmail(c)) {
+                          <div class="contact-line">
+                            <mat-icon>email</mat-icon>
+                            <span>{{ getCandidateEmail(c) }}</span>
+                          </div>
+                        }
+                        @if (getCandidatePhone(c)) {
+                          <div class="contact-line">
+                            <mat-icon>phone</mat-icon>
+                            <span>{{ getCandidatePhone(c) }}</span>
+                          </div>
+                        }
+                        @if (getCandidateLocation(c)) {
+                          <div class="contact-line">
+                            <mat-icon>location_on</mat-icon>
+                            <span>{{ getCandidateLocation(c) }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    @if (c.scoreMatching) {
+                      <div class="kcard-scores">
+                        <div class="mini-bar">
+                          <span>Obligatoires</span>
+                          <div class="bar-track">
+                            <div [style.width.%]="c.scoreMatching.scoreObligatoires"
+                                 [style.background]="getScoreColor(c.scoreMatching.scoreObligatoires)">
+                            </div>
+                          </div>
+                        </div>
+                        <div class="mini-bar">
+                          <span>Bonus</span>
+                          <div class="bar-track">
+                            <div [style.width.%]="c.scoreMatching.scoreBonus"
+                                 [style.background]="getScoreColor(c.scoreMatching.scoreBonus)">
+                            </div>
+                          </div>
+                        </div>
+                        <div class="tags-count">
+                          <span class="green">✓ {{ c.scoreMatching.nbTagsCorrespondants }}</span>
+                          <span class="red">✗ {{ c.scoreMatching.nbTagsManquants }}</span>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Actions rapides (gardées en backup) -->
+                    <div class="kcard-actions">
+                      @for (s of statutsKanban; track s) {
+                        @if (s !== c.statut) {
+                          <button (click)="changerStatut(c.id, s)"
+                                  [class]="'btn-statut ' + getStatutClass(s)">
+                            {{ getStatutLabel(s) }}
+                          </button>
+                        }
+                      }
+                      <button class="btn-ia-questions" (click)="ouvrirQuestionsIA(c)" title="Questions d'entretien IA">
+                        <mat-icon>psychology</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                <!-- Zone drop vide -->
+                @if (getCandidaturesByStatut(statut).length === 0) {
+                  <div class="empty-col">
+                    <span>{{ dragOverStatut === statut ? 'Déposer ici' : 'Aucune candidature' }}</span>
+                  </div>
                 }
               </div>
             </div>
@@ -301,14 +410,14 @@
         </div>
       }
 
-      @if (!selectedOffreId) {
+      @if (selectedOffreId === null) {
         <div class="empty-state">
           <mat-icon>people_outline</mat-icon>
           <p>Sélectionnez une offre pour voir les candidatures</p>
         </div>
       }
 
-      @if (selectedOffreId && candidatures.length === 0) {
+      @if (selectedOffreId !== null && candidatures.length === 0) {
         <div class="empty-state">
           <mat-icon>inbox</mat-icon>
           <p>Aucune candidature pour cette offre</p>
@@ -362,6 +471,38 @@
   </main>
 </div>
 
+<!-- ===== PANEL QUESTIONS IA ===== -->
+@if (iaQuestionsPanel) {
+  <div class="ia-overlay" (click)="fermerQuestionsIA()"></div>
+  <div class="ia-panel">
+    <div class="ia-panel-header">
+      <div class="ia-panel-title">
+        <mat-icon>psychology</mat-icon>
+        Questions d'entretien — {{ iaQuestionsPanel.candidatNom }}
+      </div>
+      <button class="ia-panel-close" (click)="fermerQuestionsIA()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="ia-panel-body">
+      @if (iaQuestionsPanel.loading) {
+        <div class="ia-loading">
+          <mat-icon class="ia-spin">autorenew</mat-icon>
+          <span>Gemini analyse le profil...</span>
+        </div>
+      } @else {
+        <p class="ia-subtitle">5 questions techniques générées par IA</p>
+        @for (q of iaQuestionsPanel.questions; track $index) {
+          <div class="ia-question">
+            <span class="ia-q-num">{{ $index + 1 }}</span>
+            <span class="ia-q-text">{{ q }}</span>
+          </div>
+        }
+      }
+    </div>
+  </div>
+}
+
 <!-- ===== MODAL OFFRE ===== -->
 @if (showOffreModal) {
   <div class="modal-overlay" (click)="showOffreModal = false">
@@ -386,9 +527,15 @@
         </div>
 
         <div class="form-group">
-          <label>Description *</label>
-          <textarea formControlName="description" rows="4"
-                    placeholder="Décrivez le poste..."></textarea>
+          <div class="ia-label-row">
+            <label>Description *</label>
+            <button type="button" class="btn-ia" (click)="genererDescriptionIA()" [disabled]="iaGenerating">
+              <mat-icon>{{ iaGenerating ? 'autorenew' : 'psychology' }}</mat-icon>
+              {{ iaGenerating ? 'Génération...' : 'Générer avec IA' }}
+            </button>
+          </div>
+          <textarea formControlName="description" rows="6"
+                    placeholder="Décrivez le poste ou cliquez sur 'Générer avec IA'..."></textarea>
         </div>
 
         <div class="form-row-3">
@@ -429,13 +576,53 @@
         <div class="form-group">
           <label>Tags requis</label>
           <div class="tags-selector">
-            <div class="tags-available">
-              @for (tag of allTags; track tag.id) {
-                <span class="tag-option"
-                      [class.selected]="isTagSelected(tag.id)"
-                      (click)="ajouterTagOffre(tag)">
-                  {{ tag.libelle }}
-                </span>
+            <div class="tags-selector-header">
+              <p class="tags-hint">Cliquez pour ajouter :</p>
+              <button type="button" class="btn-add-tag-inline" (click)="showTagForm = !showTagForm">
+                <mat-icon>add</mat-icon> Nouveau tag
+              </button>
+            </div>
+            @if (showTagForm) {
+              <div class="new-tag-form">
+                <input type="text" [(ngModel)]="newTagLibelle" placeholder="Ex: Angular"
+                       (keyup.enter)="creerTag()">
+                <select [(ngModel)]="newTagCategorie" (change)="onTagCategorieChange()">
+                  @for (cat of tagCategories; track cat) {
+                    <option [value]="cat">{{ cat }}</option>
+                  }
+                  <option [value]="customTagCategoryValue">+ Nouvelle catégorie...</option>
+                </select>
+
+                @if (isCustomTagCategorySelected) {
+                  <input type="text"
+                         class="custom-tag-category-input"
+                         [(ngModel)]="newTagCategorieCustom"
+                         [ngModelOptions]="{standalone: true}"
+                         placeholder="Ex: IA, SECURITE, QA"
+                         (keyup.enter)="creerTag()">
+                }
+
+                <button type="button" class="btn-save-tag" (click)="creerTag()"><mat-icon>check</mat-icon></button>
+                <button type="button" class="btn-cancel-tag" (click)="showTagForm = false; resetTagCreationForm()"><mat-icon>close</mat-icon></button>
+              </div>
+            }
+            <div class="tags-categories-list">
+              @for (group of groupedTagsForDisplay; track group.categorie) {
+                <div class="tags-category-group">
+                  <div class="tags-category-header">
+                    <strong>{{ group.label }}</strong>
+                    <span>{{ group.tags.length }}</span>
+                  </div>
+                  <div class="tags-available">
+                    @for (tag of group.tags; track tag.id) {
+                      <span class="tag-option"
+                            [class.selected]="isTagSelected(tag.id)"
+                            (click)="ajouterTagOffre(tag)">
+                        {{ tag.libelle }}
+                      </span>
+                    }
+                  </div>
+                </div>
               }
             </div>
           </div>

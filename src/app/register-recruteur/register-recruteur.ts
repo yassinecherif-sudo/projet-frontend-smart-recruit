@@ -4,7 +4,6 @@ import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } 
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 
 const API = 'http://localhost:8083';
 
@@ -16,7 +15,6 @@ const API = 'http://localhost:8083';
     ReactiveFormsModule,
     FormsModule,
     MatIconModule,
-    MatButtonModule,
   ],
   templateUrl: './register-recruteur.html',
   styleUrl: './register-recruteur.scss',
